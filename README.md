@@ -1,20 +1,16 @@
-# Beot
+<p align="center">
+  <img src="assets/logo.svg" alt="Beot" width="300">
+</p>
+
+<h1 align="center">Beot</h1>
+
+<p align="center"><em>Chat AI di terminal — BYOK, nol server, satu dependensi.</em></p>
+
+<p align="center">
+  <img src="assets/beot-preview.png" alt="Tampilan splash Beot" width="860">
+</p>
 
 Chat AI di terminal — karakter bebas (mode `build` & `plan`), bisa membaca file lokal sebagai konteks, kunci API milikmu sendiri, nol server. Untuk developer, tim kerja, dan siapa saja yang hidup di terminal.
-
-```
-                                  █▀▀▄ █▀▀▀ █▀▀█ ▀▀█▀▀
-                                  █▀▀▄ █▀▀  █  █   █
-                                  ▀▀▀  ▀▀▀▀ ▀▀▀▀   ▀
-
-                          v0.1 · chat AI di terminal · BYOK · nol server
-
-            › Ketik pesan… (/ untuk menu · F2 gambar)
-
-            build  proyek  gemini-2.0-flash      ctx ░░░░░ 0%  0 tok  / menu
-
-                             shift+tab persona    / menu    F2 gambar
-```
 
 Setelah kamu mengirim pesan, splash hilang dan tampilan jadi percakapan:
 

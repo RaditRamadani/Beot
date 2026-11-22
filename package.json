@@ -20,7 +20,9 @@
     "ui/",
     "personas/",
     "skills-bawaan/",
-    "beot-spec.md"
+    "assets/",
+    "beot-spec.md",
+    "CHANGELOG.md"
   ],
   "keywords": [
     "cli",

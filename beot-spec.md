@@ -61,8 +61,9 @@ lib/readfile.js       baca txt/md/csv/pdf, batas ukuran
 lib/commands.js       daftar perintah + filter menu
 lib/providers.js      katalog provider + daftar model live/static
 lib/tui.js            TUI satu-frame: log, composer, popup, input pipe
-ui/theme.js           warna, banner, prompt, ikon
-ui/logo.js            logo blok 3 baris (B E O T) + fallback lebar
+ui/theme.js           palet + warna + banner
+ui/logo.js            logo blok 3 baris (B E O T)
+assets/               logo.svg + beot-preview.png (README)
 personas/*.json       2 persona bawaan
 skills-bawaan/*.md    11 skill bawaan
 ```
