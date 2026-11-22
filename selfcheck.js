@@ -436,7 +436,7 @@ try {
   assert.ok(plain().includes('Ketik pesan'), 'placeholder tampil saat input kosong');
   chunks.length = 0;
   await type('/');
-  assert.ok(!plain().includes('▌'), 'palette: composer disembunyikan');
+  assert.ok(!plain().includes('›'), 'palette: composer disembunyikan');
   assert.ok(plain().includes('build · gemini-2.0-flash'), 'palette: status tetap tampil');
   assert.ok(plain().split('\n').some((ln) => ln.includes('build') && ln.includes('ctx 0')), 'palette: status satu baris');
   assert.ok(plain().includes('tab lengkapi') && plain().includes('/persona'), 'palette / tampil');
@@ -468,7 +468,7 @@ try {
   chunks.length = 0;
   await press('escape');
   assert.ok(!plain().includes('/persona'), 'Esc menutup palette');
-  assert.ok(plain().includes('▌'), 'composer kembali setelah Esc');
+  assert.ok(plain().includes('›'), 'composer kembali setelah Esc');
   chunks.length = 0;
   await type('p');
   assert.ok(!plain().includes('/persona'), 'menu tetap tertutup setelah Esc (tidak muncul lagi)');
@@ -562,7 +562,7 @@ try {
   assert.ok(plain().includes('baris dua') && plain().includes('baris tiga'), 'tempel multi-baris tampil di composer');
   await press('return', '\r');
   assert.equal(await p, 'baris satu\nbaris dua\nbaris tiga', 'tempel multi-baris dikirim utuh');
-  assert.ok(plain().includes('▎ baris dua'), 'semua baris pesan tampil di transkrip');
+  assert.ok(plain().includes('baris dua'), 'semua baris pesan tampil di transkrip');
 
   chunks.length = 0;
   clearLog();
@@ -620,9 +620,10 @@ try {
   chunks.length = 0;
   await press('return', '\r');
   assert.equal(await p, 'halo', 'teks biasa tetap terkirim');
-  const userRow = plain().split('\n').find((ln) => ln.includes('▎ halo'));
-  assert.ok(userRow, 'pesan user ditandai bar ▎');
-  assert.ok(!/48;5;236/.test(userRow), 'pesan user tanpa blok latar');
+  const rawRows = chunks.join('').split('\r\n');
+  const userRow = rawRows.find((ln) => ln.includes('halo') && ln.includes('48;5;236'));
+  assert.ok(userRow, 'pesan user memakai blok latar');
+  assert.ok(!chunks.join('').includes('▎'), 'tanpa bar kiri');
 
   chunks.length = 0;
   append('halo \x1b[31mMERAH\x1b[0m selesai');
