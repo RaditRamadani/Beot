@@ -75,44 +75,47 @@ Pemasangan **tidak pernah otomatis**:
 
 Tanpa kartu kredit. Kuota gratis ada batasnya per hari — cukup untuk pemakaian harian.
 
-## Perintah
+## Perintah & pintasan
 
-Ketik `/` untuk membuka **palette perintah layar penuh**: composer diganti daftar selebar terminal tanpa bingkai (transkrip tetap terlihat di atasnya), baris terpilih berlatar **biru** penuh, garis pemisah, lalu `↑`/`↓` memilih. `Tab` mengisi perintah + spasi, `Enter` menjalankan, `Esc` menutup palette (tetap tertutup sampai baris dikosongkan). `/key`, `/model`, dan `/persona` membuka **kotak popup berbingkai** di tengah layar (latar diredupkan, bingkai biru `╭─╮`, judul + `esc`, item terpilih berlatar **biru**, item aktif ditandai `●`). `/key` memakai modal input dengan nilai disamarkan dan `Esc` untuk batal. **Shift+Tab** mengganti persona kapan saja (mis. `build` ↔ `plan`). Saat menunggu jawaban, baris bot menampilkan spinner `⠋ Memikir…` yang terus berjalan (detik per round) dan berubah jadi `✎ write_file · n kar` saat model mengirim argumen tool.
+**Menu & dialog**
 
-Input tampil sebagai **blok gelap** selebar layar **tanpa bar kiri**, dengan prompt biru `›`; baris lanjutan menjorok 4 spasi. Satu baris status tampil **di luar blok** (dipisah satu baris kosong): `persona  folder  model` di kiri, `ctx ▓▓░░░ <pct>%  <n> tok  / menu` di kanan (rata). Saat kosong ada placeholder `Ketik pesan…`; saat digulir ada indikator `↑ n baris · PgDn / shift+↓ turun`. `ctx` = ukuran konteks request terakhir (bukan total sesi); rincian token ada di `/status`. **Esc menghentikan jawaban** yang sedang berjalan (Ctrl+C diabaikan saat menjawab), dan ketikan selama bot menjawab **tidak hilang** — otomatis masuk ke prompt berikutnya. Stream yang diam >`stream_timeout` (default 90 detik; bisa diubah di `/setting` atau env `BEOT_STREAM_IDLE_MS`) diulang otomatis 1x; koneksi yang diputus (`terminated`) juga diulang 1x. Kalau tetap gagal tampil pesan ramah. Saat model mengirim argumen tool, spinner menampilkan `✎ write_file · n kar` supaya kelihatan progresnya. Bila model mengirim reasoning (`reasoning_content`), isinya **tidak tampil saat berpikir** (hanya spinner `Memikir… <detik>s`), lalu meringkas jadi blok `✻ berpikir · 11.9s` sebelum jawaban dengan baris kosong di atas/bawah — **klik baris itu** untuk buka/tutup isi penuh (matikan dengan `/thinking`). Spinner menampilkan detik berjalan (netral → biru → merah). Jawaban memakai markdown ringan (bold, inline code, bullet). Tema bisa diganti dengan `/theme` (default, nord, senja, mono, kontras). Composer selalu tampil di bawah (full-screen, alternate screen). Di transkrip, pesanmu tampil sebagai **blok gelap selebar layar** (tanpa bar kiri), jawaban bot sebagai `◆ Beot`. Setiap tool yang selesai tampil sebagai **baris buku besar**: label kiri, titik-titik, ukuran/durasi rata kanan (`baca  data.csv ········ 1.2 kB  ✓ 0.1 s`). Kode di jawaban (blok <code>```</code>) tampil bernomor dengan label bahasa dan warna keyword/string/komentar; tanda `+`/`-` di baris diff diberi warna hijau/merah (tanpa latar penuh). **Tempel prompt multi-baris** (Ctrl+V / Shift+Insert) masuk utuh ke composer — tidak terkirim per baris; tekan `Enter` sekali untuk mengirim semuanya sebagai satu pesan. **File manager**: tekan **Ctrl+O** (atau `/files`) untuk menjelajahi folder kerja — `📁` folder, `📄` file, `..` naik folder, Enter = baca file jadi konteks. **Agent ringan**: model bisa memanggil tool `list_dir`, `read_file` (dengan `offset`/`limit`), `grep_file`, `glob_file`, `write_file`, serta `export_pdf`/`export_xlsx`/`export_docx`/`export_rtf`; penulisan file default **langsung simpan** (bisa diubah ke mode tanya lewat `/setting`) dan dibatasi di folder kerja (`.git`/`node_modules` dilarang). Ketik **`@`** di composer untuk memilih file → isinya ikut dikirim bersama pesan (bisa banyak). **Gambar**: copy gambar (screenshot/foto) lalu **Ctrl+V** — app membaca clipboard OS sendiri (app-side), menampilkan chip `📎 gambar.png`, dan mengirimnya sebagai `image_url`. Fallback **Shift+Insert / F2** untuk terminal yang menelan Ctrl+V. Maks 5 MB, satu gambar per pesan, butuh **model vision**; file temp langsung dihapus. **Dokumen**: copy file dari Explorer lalu Ctrl+V — `.txt .md .csv .pdf` dibaca sebagai teks dan ditempel ke pesan (`[DOKUMEN: nama]`), satu file, batas ±50 kB. `.docx` dan PDF scan belum didukung. Teks yang ditempel lewat Ctrl+V juga ditangani. Riwayat chat disimpan di buffer aplikasi — scroll dengan **roda mouse** atau **PgUp/PgDn** (juga saat bot menjawab); `↑`/`↓` tetap untuk riwayat pesan. **Ctrl+C saat ada seleksi = salin** (tidak keluar); tanpa seleksi tekan **2×** untuk keluar. Saat popup/modal terbuka atau bot menjawab, Ctrl+C diabaikan — pakai **Esc** untuk batal/stop. **Drag mouse** di transkrip menyeleksi teks (highlight) dan otomatis menyalin ke clipboard saat tombol dilepas (OSC 52 + clipboard OS); klik tanpa geser menghapus seleksi. Saat keluar, layar kembali bersih: hanya pesan keluar yang dicetak, tanpa dump transkrip.
+- `/` membuka palette perintah layar penuh: baris terpilih biru penuh, `↑`/`↓` pilih, `Tab` lengkapi, `Enter` jalankan, `Esc` tutup (tetap tertutup sampai baris dikosongkan).
+- `/key`, `/model`, `/persona`, `/theme`, `/skill`, `/sessions`, `/setting`, `/files` membuka **popup panel** di tengah layar: latar diredupkan, band judul biru, item aktif `●`, tutup dengan `Esc`.
+- `/key` memakai input tersamarkan (`•`); `/status` dan `/cost` juga tampil sebagai panel (tutup dengan `Esc`/`Enter`).
+- `/update` mengecek versi baru lalu menawarkan pemasangan lewat `npm` (butuh konfirmasi).
 
-**Folder kerja**: app memakai folder tempat kamu menjalankan `Beot` (atau `beot D:\Coding\tes`). Pindah saat session dengan **`/cd <folder>`**; tambahkan folder luar dengan **`/add-dir <folder>`**. Kalau model minta file di luar folder, muncul modal **Izinkan akses?** — pilih `Izinkan` sekali atau `Tolak`. Tool tetap tidak bisa keluar dari folder kerja + folder izin tanpa persetujuanmu.
+**Composer & transkrip**
 
-**Tabel jawaban**: tabel markdown dari model dirender rapi — bingkai `╭ ╮ ╰ ╯`, garis pemisah antar baris, kolom rata, header tebal, sel panjang di-wrap sesuai lebar terminal (baris `|---|` tidak ikut tampil).
+- Composer = blok gelap tanpa bar kiri, prompt biru `›`; baris lanjutan menjorok 4 spasi.
+- Status di luar blok: `persona  folder  model` (kiri) dan `ctx ▓▓░░░ <pct>%  <n> tok  / menu` (kanan). `ctx` = token request terakhir, bukan total sesi.
+- Pesanmu tampil sebagai blok gelap selebar layar; jawaban bot diawali `◆ Beot`.
+- Setiap tool selesai tampil sebagai baris buku besar: `baca data.csv ······· 1.2 kB  ✓ 0.1 s`.
+- Diff memakai nomor baris asli + tanda `+`/`-` berwarna (tanpa latar); judul blok memuat nama file dan `+X −Y`.
+- Tabel markdown dirender berbingkai `╭ ╮ ╰ ╯`, header tebal, angka rata kanan, sel panjang di-wrap.
 
-**Diff sebelum simpan**: setiap `write_file` membuka blok `▐ <path>  ubah  +X −Y` / `▐ <path>  baru  +X` dengan **nomor baris asli file** (lama untuk `-`, baru untuk `+`) dan tanda `+`/`-` berwarna (tanpa latar penuh). Setelah blok selesai ada baris buku besar `tulis <path> ····· ✓ <durasi>`. Default **tanya dulu** (`? Simpan <nama>? · enter=ya · esc=batal`); mau langsung simpan? `/setting` → `konfirmasi tulis` → `Langsung simpan`. Isi yang sama tidak ditulis ulang. Kalau tool gagal (argumen rusak, path ditolak, file terlalu besar), transkrip menampilkan `✗ <tool> · <pesan>` — tidak lagi diam.
+**Mengetik & navigasi**
 
-**Ekspor dokumen**: minta bot, mis. "buat laporan.pdf dari ringkasan ini", "buat data.xlsx dari tabel berikut", atau "buat surat.docx". Bot memanggil `export_pdf` / `export_xlsx` / `export_docx` / `export_rtf`, lalu default **tanya dulu** (`? Simpan <nama>?`); mau langsung simpan? `/setting` → `konfirmasi tulis` → `Langsung simpan`. Semua file ditulis di folder kerja/folder izin; formatnya sederhana (PDF teks + nomor halaman, Excel satu sheet dengan header tebal, Word/RTF paragraf + bullet), tanpa dependensi baru. PDF memakai font Latin-1, jadi huruf non-Latin (mis. CJK/emoji) tampil `?`.
+- `Esc` menghentikan jawaban; ketikan selama bot menjawab masuk ke prompt berikutnya.
+- `Ctrl+V` / `Shift+Insert` menempel teks, gambar, atau file; `F2` alternatif untuk terminal yang menelan Ctrl+V.
+- `@` memilih file supaya isinya ikut terkirim; `Ctrl+O` (atau `/files`) membuka file manager.
+- `↑`/`↓` = riwayat input. Scroll transkrip: roda mouse, `PgUp`/`PgDn`, atau `Shift+↑/↓`.
+- `Ctrl+C` saat ada seleksi = salin (tidak keluar); tanpa seleksi tekan **2×** untuk keluar. Saat popup terbuka, pakai `Esc`.
+- `Shift+Tab` mengganti persona kapan saja (`build` ↔ `plan`).
+- **Drag mouse** di transkrip menyeleksi dan otomatis menyalin ke clipboard; klik tanpa geser menghapus seleksi.
 
-| Perintah | Fungsi |
-|---|---|
-| `/persona [nama]` | ganti karakter bot |
-| `/skill [nama]` | buka modal pilih skill (termasuk `(tanpa skill)`) / aktifkan berdasarkan nama |
-| `/files` | file manager (Ctrl+O): jelajahi folder kerja, `📂 Ketik lokasi…` untuk path bebas, pilih file untuk dibaca |
-| `/cd <folder>` | pindah folder kerja (tanpa argumen = lihat lokasi) |
-| `/add-dir <folder>` | izinkan folder luar untuk session (ketik lagi = hapus) |
-| `/tugas <path>` | baca file `.txt .md .csv .pdf` jadi konteks |
-| `/key` | pilih provider (Gemini, Groq, OpenRouter, OpenAI, Ollama, custom) lalu isi key dan pilih model |
-| `/model [nama]` | pilih model dari daftar live provider (`GET /models`, non-chat disaring) + katalog, atau ketik manual · `/model base <url>` ganti base_url |
-| `/clear` | hapus riwayat sesi (sesi tersimpan tidak dihapus) |
-| `/init` | buat `BEOT.md` dari ringkasan proyek (tanpa model, 0 token) |
-| `/ingat [--global] <fakta>` | tambah satu baris ke `BEOT.md` proyek (atau global) |
-| `/compact` | ringkas riwayat jadi satu pesan (otomatis saat konteks >85%) |
-| `/sessions` | pilih & lanjutkan sesi tersimpan di folder ini |
-| `/reload` | muat ulang config, persona, skill dari disk |
-| `/setting` | lihat pengaturan → popup ubah base_url / model / api_key / persona / timeout stream / konfirmasi tulis / izin path luar / izin shell / izin web, atau buka file config |
-| `/status` | token request terakhir + total sesi |
-| `/cost` | perkiraan biaya (USD) request terakhir + total sesi dari tabel harga publik |
-| `/theme [nama]` | tanpa argumen: panel **Pilih tema**; `preview` (atau `daftar`): daftar semua tema tanpa mengubah apa pun; dengan nama: langsung terapkan + contoh tampilan |
-| `/thinking` | tampilkan/sembunyikan blok `✻ berpikir · <detik>s` |
-| `/update` | cek versi terbaru lalu pasang lewat `npm i -g beot@latest` (konfirmasi dulu) |
-| `/bantu` | daftar perintah |
-| `/exit` | keluar |
+**Saat menunggu jawaban**
+
+- Spinner `⠋ Memikir… 3s` (netral → biru ≥5 dtk → merah ≥15 dtk), berubah jadi `✎ tool · n kar` saat argumen tool mengalir.
+- `reasoning_content` tidak dicetak langsung; setelah selesai muncul `✻ berpikir · 11.9s` — klik untuk buka isi, `/thinking` mematikan.
+- Stream diam > `stream_timeout` (default 90 dtk) atau koneksi putus → ulang otomatis 1×; gagal lagi → pesan ramah.
+
+**Tool & berkas**
+
+- Tool: `list_dir`, `read_file` (`offset`/`limit`), `grep_file`, `glob_file`, `write_file`, `edit_file`, `bash`, `web_fetch`, `todo_write`, `export_*`, `skill`.
+- Menulis file dan menjalankan perintah default **tanya dulu**; bisa dilonggarkan di `/setting`. Semua dibatasi folder kerja + folder izin.
+- `beot <folder>` atau `/cd <folder>` pindah folder; `/add-dir <folder>` menambah folder luar (modal **Izinkan akses?**).
+- Gambar: copy lalu `Ctrl+V` → chip `📎 nama`, maks 5 MB, butuh model vision. Dokumen `.txt .md .csv .pdf` ditempel sebagai `[DOKUMEN: nama]` (maks ±50 kB; `.docx` dan PDF scan belum didukung).
+- Ekspor `export_pdf` / `export_xlsx` / `export_docx` / `export_rtf` tanpa dependensi baru; PDF memakai Latin-1, karakter non-Latin tampil `?`.
 
 ## Persona
 
@@ -269,10 +272,16 @@ Cara menghemat: matikan tool yang tidak dipakai (`/setting` → izin shell/web �
 - Saat chat, isi pesan + teks file yang kamu panggil dikirim **langsung ke provider AI pilihanmu** (Google/Groq/dll) — sama seperti memakai situs mereka.
 - **Default aman**: file **ditanya dulu** sebelum ditulis (`? Simpan <nama>?`) dan akses path di luar folder kerja juga **ditanya** (`Izinkan akses?`). Bisa dilonggarkan lewat `/setting` → `konfirmasi tulis` / `izin path luar`. App tidak pernah menghapus file.
 - **Prompt injection itu nyata**: isi file yang dibaca model adalah input tak terpercaya. Blokir di bawah berbasis **path**, bukan pemahaman isi — file biasa berisi instruksi jahat tetap bisa membuat model membaca file lain yang tidak diblokir, lalu isinya terkirim ke provider. Karena itu default tulis = tanya dulu. Jangan buka folder yang berisi rahasia saat memakai model yang belum kamu percaya.
-- Path di-resolve dengan **realpath**: symlink/junction yang mengarah keluar folder izin tetap ditolak, termasuk saat `grep_file`/`glob_file` menyapu folder. Escape ANSI dari isi model/file dibuang saat render (termasuk C1/OSC/DCS), jadi isi asing tidak bisa menyuntik perintah terminal. File sensitif **diblokir** untuk dibaca/dicari/ditulis lewat tool: `.env*`, kredensial (`id_rsa`, `.npmrc`, `.netrc`, `.ssh/`, `.aws/`), folder `.git/`, dan seluruh `~/.beot/` (config berisi API key). Jadi API key tidak pernah terkirim ke provider lewat tool.
+- Path di-resolve dengan **realpath**: symlink/junction yang mengarah keluar folder izin ditolak, termasuk saat `grep_file`/`glob_file` menyapu folder.
+- Escape ANSI (termasuk C1/OSC/DCS) dari isi model/file dibuang saat render — isi asing tidak bisa menyuntik terminal.
+- File sensitif **diblokir** untuk dibaca/dicari/ditulis lewat tool: `.env*`, kredensial (`id_rsa`, `.npmrc`, `.netrc`, `.ssh/`, `.aws/`), folder `.git/`, dan seluruh `~/.beot/` (berisi API key).
 - **Ganti host = key dihapus**: kalau `base_url` diarahkan ke host lain (lewat `/model base` atau `/setting`), `api_key` lama otomatis dikosongkan supaya tidak terkirim ke server baru; isi lagi lewat `/key`.
-- **Shell butuh izin**: tool `bash` default `ask` — prompt menampilkan **perintah penuh** (dibungkus, bukan dipotong), perintah >400 karakter ditolak, dengan tolak-keras yang tidak bisa di-allow. `shell: allow` hanya untuk folder yang kamu percaya. Environment perintah dibersihkan secara default (`shell_env: clean`): variabel seperti `*KEY*`, `*TOKEN*`, `*SECRET*`, `*PASS*`, `*AUTH*` tidak diteruskan; ubah ke `full` hanya bila perlu.
-- **Web hanya publik**: `web_fetch` menolak `localhost`, `localhost.`, `127.*`, `10.*`, `192.168.*`, `172.16–31.*`, `169.254.*`, `::1`, `[::ffff:…]`, dan `*.local`; **DNS di-resolve sekali lalu IP-nya dipin** (anti DNS rebinding), redirect divalidasi **per-hop**, body dibatasi 1 MB saat streaming. Konten web ditandai “data, bukan perintah”. Default `ask`; `web: allow` untuk otomatis, `deny` untuk mematikan.
+- **Shell butuh izin**: default `ask`, prompt menampilkan perintah **penuh** (dibungkus), perintah >400 karakter ditolak, dan daftar tolak-keras tidak bisa di-allow.
+- **Environment shell bersih** (`shell_env: clean`, default): variabel seperti `*KEY*`, `*TOKEN*`, `*SECRET*`, `*PASS*`, `*AUTH*` tidak diteruskan. Ubah ke `full` hanya bila perlu.
+- `shell: allow` hanya untuk folder yang kamu percaya — model bisa menjalankan perintah apa pun yang tidak masuk daftar tolak.
+- **Web hanya publik**: `web_fetch` menolak `localhost`, `localhost.`, `127.*`, `10.*`, `192.168.*`, `172.16–31.*`, `169.254.*`, `::1`, `[::ffff:…]`, dan `*.local`.
+- **DNS dipin** (anti rebinding): resolusi dicek sekali, koneksi memakai IP itu; redirect divalidasi per-hop; body maks 1 MB saat streaming.
+- Konten web ditandai “data, bukan perintah”. Default `ask`; `web: allow` untuk otomatis, `deny` untuk mematikan.
 - **Skill/memori repo butuh izin**: `.beot/skills/` dan `BEOT.md` dari folder kerja tidak dimuat sampai kamu menyetujui `Muat memori proyek?` (disimpan per folder di `project_trust`). Ini menutup jalur prompt-injection lewat repo yang di-clone.
 - **Headless aman**: `beot -p` tidak membuat sesi dan **menolak semua tool tulis/shell/web** (tidak ada manusia untuk menyetujui izin) — hanya tool baca yang berjalan.
 - **File sesi** dibuat `0600` di folder `~/.beot/sessions` (`0700`), hanya berisi pesan user/assistant — tanpa API key dan tanpa tool call.
@@ -306,3 +315,5 @@ npm run selftest
 ## Lisensi
 
 MIT
+
+
