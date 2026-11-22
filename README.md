@@ -31,6 +31,18 @@ npm start
 
 Butuh **Node.js 20+**.
 
+## Mode headless (script/CI)
+
+```sh
+beot -p "ringkas README ini jadi 5 poin"
+beot -p "cari bug di src/" --output-format json
+```
+
+- Hanya tool **baca** yang berjalan; tulis/shell/web otomatis ditolak (tidak ada yang menjawab izin).
+- Keluaran teks polos: tanpa banner, tanpa ANSI.
+- `--output-format json` → `{ text, model, tokens, toolCalls: [{name, ok}], error }`.
+- Exit code: `0` sukses, `1` provider error/jawaban kosong, `2` argumen salah.
+
 ## Ambil API key gratis (2 menit)
 
 1. Buka <https://aistudio.google.com>
@@ -221,7 +233,7 @@ Cara menghemat: matikan tool yang tidak dipakai (`/setting` → izin shell/web �
 - Tool loop dibatasi **16 langkah** per pesan; jika habis, muncul peringatan dan konteks tetap disimpan — ketik "lanjutkan".
 - Tool `bash` menjalankan perintah di folder kerja, **selalu lewat izin** (default `ask`), dengan daftar tolak-keras (`rm -rf /`, `format`, `shutdown`, `curl|sh`, dll). Bisa dimatikan lewat `/setting` → `izin shell` → `Matikan`.
 - Agent: `list_dir`/`read_file`/`write_file`/`edit_file` + `grep_file`/`glob_file` + `bash` (izin `y/n`, daftar tolak-keras) + `web_fetch` (URL publik saja) + `todo_write` + `export_pdf`/`export_xlsx`/`export_docx`/`export_rtf` (tulis dengan konfirmasi, hanya di folder kerja/folder izin) + `skill`; belum ada MCP.
-- Tes ada di repo: `npm test` = `selfcheck.js` (43 cek) + `tests/chat-e2e.mjs` (chat + tool + sesi + TUI) + `tests/confirm-e2e.mjs` (default tanya dulu, setuju & tolak). Tidak butuh API key.
+- Tes ada di repo: `npm test` = `selfcheck.js` (43 cek) + `tests/chat-e2e.mjs` (chat + tool + sesi + TUI) + `tests/confirm-e2e.mjs` (default tanya dulu) + `tests/headless-e2e.mjs` (`-p` teks & JSON). Tidak butuh API key. CI menjalankan tes di Windows & Linux (Node 20/22).
 - Error `524`/`502`/`503` berasal dari gateway/provider, bukan dari Beot; app hanya menampilkan status + pesan ramah, bukan halaman HTML mentah. Error yang dikirim **di dalam stream** juga ditampilkan, tidak ditelan.
 - Kalau provider mengembalikan **jawaban kosong** (tanpa teks, thought, atau tool), Beot mengulang sekali lalu menampilkan `⚠ Provider tidak mengirim jawaban (kosong). Coba lagi.`
 - Picker provider hanya untuk endpoint OpenAI-compatible; layanan yang butuh OAuth atau API non-OpenAI (mis. Copilot, Anthropic native) belum didukung — pakai opsi custom kalau endpoint-nya kompatibel.

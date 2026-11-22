@@ -35,6 +35,7 @@ index.js              REPL, perintah, alur chat
 selfcheck.js          43 cek logika tanpa API key (npm run selftest)
 tests/chat-e2e.mjs    E2E chat + tool + sesi + TUI lewat provider palsu (npm test)
 tests/confirm-e2e.mjs E2E default "tanya dulu": setuju & tolak
+tests/headless-e2e.mjs E2E `-p` (teks & JSON), tanpa TUI
 lib/shell.js          tool bash: izin, tolak-keras, timeout
 lib/web.js            web_fetch: HTTP publik, HTML→teks, blokir host privat
 lib/cost.js           perkiraan harga token per model
@@ -166,8 +167,9 @@ Tidak ada panggilan jaringan saat startup.
 
 ## 6. REPL
 
-- Argumen CLI: `beot [folder]`, `--continue` (lanjut sesi terakhir di folder itu), `--resume` (picker sesi), `--version`, `--help`. `--help`/`--version` dicetak **sebelum** TUI masuk alternate screen dan memakai teks polos.
+- Argumen CLI: `beot [folder]`, `--continue` (lanjut sesi terakhir di folder itu), `--resume` (picker sesi), `-p/--print "<prompt>"` (headless), `--output-format json`, `--version`, `--help`. `--help`/`--version` dicetak **sebelum** TUI masuk alternate screen dan memakai teks polos.
 - Mode `--help`/`--version` tidak pernah menyentuh config, jaringan, atau clipboard.
+- Headless: `state.headless = true` → banner/ANSI mati, sesi tidak dibuat, dan semua konfirmasi (tulis/shell/web) otomatis **ditolak** sehingga hanya tool baca yang berjalan. Output: teks jawaban atau JSON `{text, model, tokens, toolCalls, error}`. Exit code `0/1/2`.
 - Prompt input mode pipe: `Kamu > `. Di TTY, composer tidak menampilkan label prompt (hanya kursor). Di transkrip TTY, pesan user tampil sebagai bar amber `▎` + teks (tanpa blok latar); jawaban bot diawali header `◆ Beot`.
 - Input dibaca per baris, di-`trim`. Baris kosong diabaikan (tidak menambah riwayat).
 - EOF (Ctrl+D pada baris kosong) mengakhiri program dengan rapi. `Ctrl+C` saat ada seleksi = menyalin seleksi (tidak keluar); tanpa seleksi, tekan **2×** dalam 1,5 detik untuk mencetak `Keluar.` lalu keluar dengan exit code 0.
@@ -545,7 +547,7 @@ Aturan:
 
 ## 16. Self-test
 
-`npm run selftest` menjalankan `selfcheck.js` tanpa API key dan tanpa jaringan. `npm test` menjalankan selfcheck **plus** `tests/chat-e2e.mjs` (provider palsu + TUI disimulasikan lewat `tests/tui-run.cjs`) dan `tests/confirm-e2e.mjs` (default tanya dulu: setuju & tolak). Exit code `1` bila ada yang gagal.
+`npm run selftest` menjalankan `selfcheck.js` tanpa API key dan tanpa jaringan. `npm test` menjalankan selfcheck **plus** `tests/chat-e2e.mjs`, `tests/confirm-e2e.mjs`, dan `tests/headless-e2e.mjs` (provider palsu + TUI disimulasikan lewat `tests/tui-run.cjs`). Exit code `1` bila ada yang gagal. CI (`.github/workflows/test.yml`) menjalankan `npm ci && npm test` di Ubuntu & Windows, Node 20 & 22.
 
 Cek yang wajib lolos:
 
@@ -590,6 +592,7 @@ Cek yang wajib lolos:
 39. Baca file besar: teks dipotong ke `MAX_CHARS`, ukuran asli tetap dilaporkan, file tidak dimuat seluruhnya.
 40. Tema kustom: `registerThemes` menerima palet sah, menolak nama bawaan, kunci asing, dan kode berisi escape; tema kustom bisa diaktifkan lewat `setTheme`.
 41. Skill bertingkat: `loadSkillsFromMany` menggabungkan beberapa folder, nama sama → folder belakangan menang, file tanpa frontmatter dilewati.
+42. Headless: `-p` mengembalikan hanya jawaban (tanpa ANSI/banner), `--output-format json` valid dengan `text/model/tokens/toolCalls`, prompt kosong → exit 2.
 
 ## 17. Kriteria penerimaan v0.1
 
@@ -614,3 +617,4 @@ Cek yang wajib lolos:
 19. `bash` meminta izin (default), menolak pola destruktif, output dikirim balik ke model; `shell: deny` menyembunyikan tool; `plan` selalu bertanya.
 20. Sesi: mengirim pesan membuat `.jsonl` di `~/.beot/sessions`; `--continue` memuat sesi terakhir; `/compact` mengganti riwayat dengan satu pesan ringkasan; `/sessions` memuat sesi pilihan.
 21. `/cost` menampilkan tarif model, biaya request terakhir, dan total sesi; model tanpa harga hanya menampilkan token. `web_fetch` menolak `127.0.0.1` dan `file://`, dan default `ask` sebelum mengunduh.
+22. `beot -p "..."` mencetak jawaban saja (tanpa banner/ANSI) dan keluar; `--output-format json` menghasilkan JSON valid; tulis/shell/web ditolak di mode headless.
