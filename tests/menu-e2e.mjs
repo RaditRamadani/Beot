@@ -80,7 +80,8 @@ async function step(line, expect, { esc = false } = {}) {
   }
 }
 
-await waitFor('beot 0.1', 0, 10_000);
+await waitFor('█▀▀▄', 0, 10_000);
+ok(out.join('').includes('█▀▀▄'), 'logo tampil saat startup');
 
 await step('/bantu', 'Perintah');
 await step('/status', 'Status sesi');
@@ -134,6 +135,21 @@ ok(fs.existsSync(path.join(work, 'BEOT.md')), '/init menulis BEOT.md');
 ok(fs.readFileSync(path.join(work, 'BEOT.md'), 'utf8').includes('tes pakai node'), '/ingat masuk BEOT.md');
 const sessDir = path.join(home, '.beot', 'sessions');
 ok(fs.existsSync(sessDir) && fs.readdirSync(sessDir).some((f) => f.endsWith('.jsonl')), 'chat membuat file sesi');
+
+// Regresi: cwd = folder home -> ~/.beot/skills jangan dihitung sebagai skill proyek.
+const homeOut = [];
+const child2 = spawn(process.execPath, [path.join(ROOT, 'tests', 'tui-run.cjs')], {
+  cwd: home,
+  env: { ...process.env, USERPROFILE: home, HOME: home, HOMEPATH: home },
+  stdio: ['pipe', 'pipe', 'pipe'],
+});
+child2.stdout.on('data', (d) => homeOut.push(String(d)));
+child2.stderr.on('data', (d) => homeOut.push(String(d)));
+await wait(1500);
+child2.stdin.write('/exit\n');
+await wait(500);
+try { child2.kill(); } catch { /* sudah keluar */ }
+ok(!homeOut.join('').includes('skill proyek'), 'cwd=home tidak menghitung skill user sebagai proyek');
 
 server.close();
 for (const dir of [work, home, outside]) {

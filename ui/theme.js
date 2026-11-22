@@ -1,3 +1,5 @@
+import { logoRows, LOGO_WIDTH, LOGO_MIN_WIDTH } from './logo.js';
+
 const ESC = '\x1b[';
 export const RESET = `${ESC}0m`;
 
@@ -91,9 +93,26 @@ export function raw(key) {
 
 export function banner({ persona, model, file = '', width = 60 }) {
   const w = Math.max(30, width);
-  const room = Math.max(10, w - 21);
-  let meta = [persona, model].filter(Boolean).join('  ');
-  if (meta.length > room) meta = `${meta.slice(0, Math.max(1, room - 1))}…`;
+  const meta = [persona, model].filter(Boolean).join(' · ');
+  if (w >= LOGO_MIN_WIDTH) {
+    const rows = logoRows();
+    const leftW = LOGO_WIDTH + 1; // 1 spasi depan
+    const room = Math.max(8, w - leftW - 2);
+    const fit = (text) => (text.length > room ? `${text.slice(0, Math.max(1, room - 1))}…` : text);
+    const gap = (text) => ' '.repeat(Math.max(2, w - leftW - text.length));
+    const m = fit(meta);
+    const note = fit(file ? `berkas ${file}` : 'v0.1');
+    const line1 = ` ${c.gold(rows[0])}`;
+    const line2 = ` ${c.gold(rows[1])}${gap(m)}${c.dim(m)}`;
+    const line3 = ` ${c.gold(rows[2])}${gap(note)}${file ? c.gold(note) : c.dim(note)}`;
+    return [
+      line1,
+      line2,
+      line3,
+      c.dim('─'.repeat(w)),
+      ` ${c.dim('ketik')} ${c.gold('/')} ${c.dim('untuk menu')}`,
+    ].join('\n');
+  }
   const pad = Math.max(2, w - 11 - meta.length);
   const line1 = ` ${c.gold('◆')} ${c.bold('beot')} ${c.dim('0.1')}${' '.repeat(pad)}${c.dim(meta)}`;
   const line2 = c.dim('═'.repeat(w));

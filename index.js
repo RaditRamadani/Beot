@@ -1371,7 +1371,12 @@ async function main() {
   say('');
   renderBanner();
   if (state.sessionFile) say(c.dim(`  ↺ lanjut sesi · ${state.history.length} pesan`));
-  const projectSkills = loadSkillsFrom(path.join(state.cwd, '.beot', 'skills'));
+  const projectSkillDir = path.join(state.cwd, '.beot', 'skills');
+  const sameDir = (a, b) => (process.platform === 'win32'
+    ? path.resolve(a).toLowerCase() === path.resolve(b).toLowerCase()
+    : path.resolve(a) === path.resolve(b));
+  // Saat cwd = folder home, folder skill "proyek" sama dengan folder skill user: jangan dihitung dua kali.
+  const projectSkills = sameDir(projectSkillDir, SKILLS_DIR) ? [] : loadSkillsFrom(projectSkillDir);
   if (projectSkills.length) say(c.dim(`  skill proyek: ${projectSkills.length} dari .beot/skills`));
   const mem = readMemoryFiles(state.cwd);
   if (mem.length) {

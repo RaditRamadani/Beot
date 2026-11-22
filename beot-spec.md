@@ -32,7 +32,7 @@ Tidak ada framework UI, tidak ada database, tidak ada HTTP server.
 
 ```
 index.js              REPL, perintah, alur chat
-selfcheck.js          44 cek logika tanpa API key (npm run selftest)
+selfcheck.js          45 cek logika tanpa API key (npm run selftest)
 tests/chat-e2e.mjs    E2E chat + tool + sesi + TUI lewat provider palsu (npm test)
 tests/confirm-e2e.mjs E2E default "tanya dulu": setuju & tolak
 tests/headless-e2e.mjs E2E `-p` (teks & JSON), tanpa TUI
@@ -57,6 +57,7 @@ lib/commands.js       daftar perintah + filter menu
 lib/providers.js      katalog provider + daftar model live/static
 lib/tui.js            TUI satu-frame: log, composer, popup, input pipe
 ui/theme.js           warna, banner, prompt, ikon
+ui/logo.js            logo blok 3 baris (B E O T) + fallback lebar
 personas/*.json       2 persona bawaan
 skills-bawaan/*.md    11 skill bawaan
 ```
@@ -487,7 +488,7 @@ Aturan:
 
 - Warna memakai ANSI 256; tiga palet bawaan: `default`, `mono`, `kontras` (dipilih lewat panel `/theme`, disimpan di config). Palet `default` memakai **satu aksen amber**; hijau hanya untuk `✓`, merah hanya untuk `✗`/error, sisanya netral + dim.
 - Tema kustom dibaca dari `~/.beot/themes.json` (objek `nama → palet`). Hanya kunci palet yang dikenal dan nilai `^[0-9;]{1,24}$` yang diterima; kunci kosong mewarisi `default`; nama bawaan tidak bisa ditimpa. `/reload` memuat ulang file tema.
-- Banner 3 baris: `◆ beot 0.1` + meta `persona  model` rata kanan, garis ganda `═` selebar layar, lalu `ketik / untuk menu` (+ `berkas <file>` bila ada). Tanpa blob/token.
+- Banner startup: **logo blok 3 baris** (`█▀▀▄ █▀▀▀ █▀▀█ ▀▀█▀▀`, lebar 20) + meta `persona · model` rata kanan di baris ke-2, `v0.1` (atau `berkas <nama>`) di baris ke-3, garis `─` selebar layar, lalu `ketik / untuk menu`. Bila terminal < 44 kolom → fallback satu baris `◆ beot 0.1` + meta + garis `═`. Logo tidak muncul di `--help` dan mode `-p`. Tanpa animasi/render ulang; logo adalah baris transkrip biasa.
 - Garis pemisah 58 karakter `─`.
 - `/bantu` menampilkan daftar perintah dengan kolom label selebar label terpanjang (maks 28) dan garis `─` selebar terminal; deskripsi panjang dipotong dengan `…`.
 - **Full-screen TUI (alternate screen)**: app memiliki seluruh layar. Area chat punya tinggi tetap dan scroll internal; composer dipaku di bawah; render ulang satu frame penuh tiap perubahan. Saat keluar, alternate screen dilepas dan layar kembali ke isi sebelumnya; hanya pesan keluar (`Sampai jumpa.`/`Keluar.`) yang dicetak — transkrip tidak didump ke scrollback.
@@ -601,10 +602,11 @@ Cek yang wajib lolos:
 41. Skill bertingkat: `loadSkillsFromMany` menggabungkan beberapa folder, nama sama → folder belakangan menang, file tanpa frontmatter dilewati.
 42. Headless: `-p` mengembalikan hanya jawaban (tanpa ANSI/banner), `--output-format json` valid dengan `text/model/tokens/toolCalls`, prompt kosong → exit 2.
 43. Memori: `appendMemory` idempoten, menolak teks kosong/>400 karakter; `memoryPrompt` memuat penanda `[MEMORI]`; `buildInitMemory` membaca `package.json` (nama + skrip tes).
+44. Logo: `logoRows` menghasilkan 3 baris selebar 20; banner lebar memakai logo (5 baris), banner sempit tanpa logo (3 baris).
 
 ## 17. Kriteria penerimaan v0.1
 
-1. `npm test` → 44 cek `ok` + 3 E2E hijau, exit code 0.
+1. `npm test` → 45 cek `ok` + 4 E2E hijau, exit code 0.
 2. Di mesin tanpa `~/.beot/config.json`, `node index.js` menampilkan banner 3 baris (wordmark + garis ganda + hint) dan composer tanpa meminta API key dan tanpa panggilan jaringan. Mengetik pesan chat hanya memberi peringatan; `/key` membuka picker provider.
 3. `/bantu` menampilkan seluruh perintah.
 4. Mengetik `/` mengganti composer dengan palette selebar layar (baris terpilih amber penuh); `↑`/`↓` memindahkan pilihan, `Tab` mengisi perintah + spasi, `Enter` menjalankan perintah terpilih. Setelah palette tertutup, composer kembali sebagai blok gelap dengan bar amber dan status satu baris (`persona  folder  model` kiri, `ctx …` kanan).
