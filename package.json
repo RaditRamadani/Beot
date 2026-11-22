@@ -1,0 +1,37 @@
+{
+  "name": "beot",
+  "version": "0.1.0",
+  "description": "Chat AI di terminal — karakter bebas, baca file tugasmu, kunci sendiri, nol server.",
+  "type": "module",
+  "bin": {
+    "beot": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "selftest": "node selfcheck.js",
+    "test": "node selfcheck.js && node tests/chat-e2e.mjs && node tests/confirm-e2e.mjs && node tests/headless-e2e.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "index.js",
+    "lib/",
+    "ui/",
+    "personas/",
+    "skills-bawaan/",
+    "beot-spec.md"
+  ],
+  "keywords": [
+    "cli",
+    "ai",
+    "agent",
+    "terminal",
+    "byok",
+    "openai-compatible"
+  ],
+  "dependencies": {
+    "pdf-parse": "^1.1.1"
+  },
+  "license": "MIT"
+}
