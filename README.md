@@ -19,7 +19,7 @@ Chat AI di terminal — karakter bebas (mode `build` & `plan`), bisa membaca fil
                              shift+tab persona    / menu    F2 gambar
 ```
 
-Setelah kamu mulai mengetik, splash hilang dan tampilan jadi percakapan:
+Setelah kamu mengirim pesan, splash hilang dan tampilan jadi percakapan:
 
 ```
 ▎ rangkum bab ini, ada typo?

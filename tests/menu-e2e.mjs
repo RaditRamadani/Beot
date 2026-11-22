@@ -83,6 +83,16 @@ async function step(line, expect, { esc = false } = {}) {
 await waitFor('██████', 0, 10_000);
 ok(out.join('').includes('██████'), 'splash logo tampil saat startup');
 
+// Mengetik belum boleh memindahkan layout: splash harus tetap, teks masuk di tengah.
+const frameOf = (from = 0) => clean(out.join('').slice(from).split('\x1b[H').pop() || '');
+child.stdin.write('ha');
+await wait(500);
+const typedFrame = frameOf();
+ok(typedFrame.includes('██████'), 'splash tetap saat mengetik');
+ok(typedFrame.includes('ha'), 'teks ketikan tampil di input splash');
+child.stdin.write('\x7f\x7f');
+await wait(300);
+
 await step('/bantu', 'Perintah');
 await step('/status', 'Status sesi');
 await step('/cost', 'Biaya (perkiraan)');
