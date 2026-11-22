@@ -10,7 +10,7 @@ import { buildFileTools, runFileTool, buildSearchTools } from './lib/filetools.j
 import { buildExportTools, runExportTool, EXPORT_NAMES } from './lib/exporttool.js';
 import { readDoc } from './lib/readfile.js';
 import { buildDiff, buildNewFileDiff } from './lib/diff.js';
-import { ask, log as tuiLog, append as tuiAppend, clearLog, init as tuiInit, setStatus, setSplashNote, shutdown, startLoading, stopLoading, beginInterrupt, endInterrupt, setTitle, bell, takeAttachment, diffBlock, markLog, rollbackLog, toolProgress, confirmInline, stripEsc, visualWidth, setFileSuggest, takeAtFiles, thoughtBlock, ledgerLine, setTodos } from './lib/tui.js';
+import { ask, log as tuiLog, append as tuiAppend, clearLog, init as tuiInit, setStatus, setSplashNote, info as tuiInfo, shutdown, startLoading, stopLoading, beginInterrupt, endInterrupt, setTitle, bell, takeAttachment, diffBlock, markLog, rollbackLog, toolProgress, confirmInline, stripEsc, visualWidth, setFileSuggest, takeAtFiles, thoughtBlock, ledgerLine, setTodos } from './lib/tui.js';
 import { COMMANDS } from './lib/commands.js';
 import { buildTodoTool, runTodoTool } from './lib/todo.js';
 import { initSession, appendTurn, listSessions, readSession, latestSession, pruneSessions } from './lib/session.js';
@@ -170,39 +170,33 @@ function cyclePersona() {
   setTitle(`Beot · ${next.nama}`);
 }
 
-function handleStatus() {
-  const width = Math.max(40, (process.stdout.columns || 80) - 2);
-  const room = Math.max(12, width - 26);
-  const row = (label, value) => {
-    const text = String(value ?? '');
-    const short = visualWidth(text) > room ? `${stripEsc(text).slice(0, Math.max(1, room - 1))}…` : text;
-    say(ledgerLine(label, short, width));
-  };
+async function handleStatus() {
   const last = state.last;
-  say(c.bold('Status sesi'));
-  if (!state.session.requests) {
-    row('request terakhir', c.dim('belum ada'));
-  } else {
-    row('request terakhir', `${fmtK(last.total)} token${last.estimated ? ' (estimasi)' : ''}`);
-    if (last.prompt != null || last.completion != null) {
-      row('rincian', `${fmtK(last.prompt ?? 0)} prompt + ${fmtK(last.completion ?? 0)} jawaban`);
-    }
-    row('konteks', `${contextPct(last.total)}% ${contextBar(last.total)}`);
-  }
-  row('sesi ini', `${state.session.requests} request · ${fmtK(state.session.tokens)} token`);
-  row('riwayat', `${state.history.length} pesan`);
-  row('model', stripEsc(state.cfg.model));
   const base = (v) => String(v || '').split('/').pop().toLowerCase();
+  const body = [];
+  if (!state.session.requests) {
+    body.push({ text: 'request terakhir', right: c.dim('belum ada') });
+  } else {
+    body.push({ text: 'request terakhir', right: `${fmtK(last.total)} token${last.estimated ? ' (estimasi)' : ''}` });
+    if (last.prompt != null || last.completion != null) {
+      body.push({ text: 'rincian', right: `${fmtK(last.prompt ?? 0)} prompt + ${fmtK(last.completion ?? 0)} jawaban` });
+    }
+    body.push({ text: 'konteks', right: `${contextPct(last.total)}%` });
+  }
+  body.push({ text: 'sesi ini', right: `${state.session.requests} request · ${fmtK(state.session.tokens)} token` });
+  body.push({ text: 'riwayat', right: `${state.history.length} pesan` });
+  body.push({ text: 'model', right: c.mint(stripEsc(state.cfg.model)) });
   if (state.last.reported) {
     const same = base(state.last.reported) === base(state.cfg.model);
-    row('respons model', `${c.mint(stripEsc(state.last.reported))}${same ? '' : c.gold(' ⚠ beda dari config')}`);
+    body.push({ text: 'respons model', right: `${c.mint(stripEsc(state.last.reported))}${same ? '' : c.gold(' ⚠ beda')}` });
   } else {
-    row('respons model', '-');
+    body.push({ text: 'respons model', right: '-' });
   }
-  row('timeout stream', `${Number(state.cfg.stream_timeout) || 90} dtk`);
-  row('thinking', state.cfg.thinking === false ? 'off' : 'on');
-  row('folder kerja', stripEsc(state.cwd));
-  if (state.extraDirs.length) row('folder izin', state.extraDirs.join(', '));
+  body.push({ text: 'timeout stream', right: `${Number(state.cfg.stream_timeout) || 90} dtk` });
+  body.push({ text: 'thinking', right: state.cfg.thinking === false ? 'off' : 'on' });
+  body.push({ text: 'folder kerja', right: stripEsc(state.cwd) });
+  if (state.extraDirs.length) body.push({ text: 'folder izin', right: stripEsc(state.extraDirs.join(', ')) });
+  await tuiInfo({ title: 'Status sesi', body });
 }
 
 async function handleFiles() {
@@ -1212,20 +1206,19 @@ async function chat(userText, attachment = null) {
   }
 }
 
-function handleCost() {
-  const width = Math.max(40, (process.stdout.columns || 80) - 2);
+async function handleCost() {
   const price = priceFor(state.cfg.model);
-  say(c.bold('Biaya (perkiraan)'));
-  say(ledgerLine('model', c.mint(stripEsc(state.cfg.model)), width));
+  const body = [{ text: 'model', right: c.mint(stripEsc(state.cfg.model)) }];
   if (!price) {
-    say(c.dim('  harga model ini belum ada di tabel — token tetap dihitung di /status.'));
-    return;
+    body.push({ text: 'tarif', right: c.dim('tidak ada di tabel') });
+    body.push({ text: 'token sesi', right: `${fmtK(state.session.tokens)} · ${state.session.requests} request` });
+  } else {
+    body.push({ text: 'tarif', right: c.dim(`$${price.input}/1M masuk · $${price.output}/1M keluar`) });
+    const last = state.last.cost != null ? c.mint(fmtUsd(state.last.cost)) : c.dim('-');
+    body.push({ text: 'request', right: `${last} ${c.dim(`${state.last.prompt ?? 0} masuk · ${state.last.completion ?? 0} keluar`)}` });
+    body.push({ text: 'sesi', right: `${c.gold(fmtUsd(state.session.cost))} ${c.dim(`${fmtK(state.session.tokens)} token · ${state.session.requests} request`)}` });
   }
-  say(ledgerLine('tarif', c.dim(`$${price.input}/1M masuk · $${price.output}/1M keluar`), width));
-  const last = state.last.cost != null ? c.mint(fmtUsd(state.last.cost)) : c.dim('-');
-  say(ledgerLine('request', `${last} ${c.dim(`${state.last.prompt ?? 0} masuk · ${state.last.completion ?? 0} keluar`)}`, width));
-  say(ledgerLine('sesi', `${c.gold(fmtUsd(state.session.cost))} ${c.dim(`${fmtK(state.session.tokens)} token · ${state.session.requests} request`)}`, width));
-  say(c.dim('  perkiraan dari harga publik, bukan tagihan resmi.'));
+  await tuiInfo({ title: 'Biaya (perkiraan)', body, foot: 'esc / enter tutup · harga publik' });
 }
 
 function handleInit(arg) {
@@ -1461,8 +1454,8 @@ async function main() {
         case '/init': handleInit(arg); break;
         case '/ingat': handleIngat(arg); break;
         case '/setting': await handleSetting(); break;
-        case '/status': handleStatus(); break;
-        case '/cost': handleCost(); break;
+        case '/status': await handleStatus(); break;
+        case '/cost': await handleCost(); break;
         case '/theme': await handleTheme(arg); break;
         case '/thinking':
           state.cfg.thinking = state.cfg.thinking === false;

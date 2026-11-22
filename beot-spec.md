@@ -204,7 +204,7 @@ Saat baris **diawali `/`** dan belum ada spasi (masih token perintah), palette p
 - Setelah `Esc`, menu tetap tertutup (tidak terbuka lagi saat mengetik) sampai baris input dikosongkan.
 - Saat menu tertutup: `↑`/`↓` menelusuri riwayat input sesi ini.
 - Menu hanya aktif saat `stdin` dan `stdout` adalah TTY. Bila bukan (pipe/CI), input memakai pembaca baris sederhana tanpa menu; baris yang masuk sebelum prompt tetap diantrekan dan EOF mengakhiri dengan rapi.
-- Picker (`/key`, `/model`, `/persona`) dan input API key tampil sebagai **kotak popup berbingkai** (`╭─╮ │ ╰─╯`, biru) dengan band judul biru di tengah layar (identitas Beot): frame chat diredupkan; judul bold di kiri + `esc` di kanan; baris `saring ›` selalu tampil dan langsung memfilter saat mengetik; item dengan deskripsi **rata kanan**; baris terpilih berlatar biru penuh + teks putih; item aktif ditandai `●`; picker mulai dari item aktif. Input key memakai label + nilai disamarkan tanpa kotak. Footer `↑↓ pilih · enter ok · esc batal` (picker) atau `enter simpan · esc batal` (input). `Esc` batal; saat ditutup, overlay hilang. Butuh TTY; di mode pipe dianggap batal.
+- Picker (`/key`, `/model`, `/persona`) dan input API key tampil sebagai **popup panel** dengan band judul biru di tengah layar (identitas Beot): frame chat diredupkan; judul bold di kiri + `esc` di kanan; baris `saring ›` selalu tampil dan langsung memfilter saat mengetik; item dengan deskripsi **rata kanan**; baris terpilih berlatar biru penuh + teks putih; item aktif ditandai `●`; picker mulai dari item aktif. Input key memakai label + nilai disamarkan tanpa kotak. Footer `↑↓ pilih · enter ok · esc batal` (picker) atau `enter simpan · esc batal` (input). `Esc` batal; saat ditutup, overlay hilang. Butuh TTY; di mode pipe dianggap batal.
 - Editor mendukung: kiri/kanan, Home/End, Backspace/Delete, Ctrl+U (hapus sebelum kursor), Ctrl+K (hapus setelah kursor), Ctrl+W (hapus kata sebelum kursor).
 - **Ctrl+O** (saat input kosong) membuka file manager: jelajahi folder kerja (`📁` folder, `📄` file, `..` naik), `📂 Ketik lokasi…` untuk membuka path absolut/relatif, `Enter` membaca file jadi konteks.
 - **`@` di composer**: mengetik `@` membuka daftar file di folder kerja (cache 10 dtk, maks 1.200 file, tampil 40 hasil). `Enter`/`Tab` menyisipkan `@<path> ` dan menandainya; saat pesan dikirim, isi file itu (maks 5 file × 40.000 karakter) disertakan sebagai `[FILE @<path>]`.
@@ -234,7 +234,7 @@ Saat baris **diawali `/`** dan belum ada spasi (masih token perintah), palette p
 | `/reload` | muat ulang `config.json`, persona, dan skill dari disk; laporkan perubahan |
 | `/setting` | tampilkan pengaturan saat ini (key disamarkan), lalu popup untuk ubah `base_url`/`model`/`api_key`/`persona`/`stream_timeout`/`write_confirm`/`external`/`shell`/`web` atau buka file config |
 | `/status` | tampilkan token request terakhir (prompt/jawaban) + jumlah request & token sesi |
-| `/cost` | perkiraan biaya USD: request terakhir + total sesi, dari tabel harga publik (`lib/cost.js`), format buku besar; model tak dikenal → hanya token |
+| `/cost` | perkiraan biaya USD: request terakhir + total sesi, dari tabel harga publik (`lib/cost.js`); model tak dikenal → hanya token |
 | `/theme [nama]` | tanpa argumen: panel **Pilih tema** (item aktif `●`, terpilih biru); `preview`/`daftar` = daftar semua tema; argumen nama: terapkan; tersimpan di config |
 | `/thinking` | tampilkan/sembunyikan blok `✻ berpikir · <detik>` (toggle, tersimpan di config `thinking`) |
 | `/bantu` | daftar perintah |
@@ -344,7 +344,7 @@ Angka diambil dari `usage` provider tiap request (`prompt_tokens`, `completion_t
 - Provider **tidak** ditampilkan di baris status (cukup `persona · model`); nama provider tetap terlihat di picker `/key`/`/model`.
 - Token dihitung per panggilan API; pada giliran dengan tool `skill`, tiap ronde menambah hitungan sesi.
 - Jumlah token sesi = akumulasi `total_tokens` semua panggilan sukses (termasuk ronde tool). Tidak ada tampilan biaya `$` karena harga per model belum ada.
-- `/status` menampilkan request terakhir (prompt + jawaban), jumlah request, total token sesi, jumlah pesan riwayat, model config, **respons model** dari provider (dibandingkan per nama model akhir — bila beda ditandai `⚠ beda dari config`), timeout stream, konfirmasi tulis, izin path luar, status `thinking`, dan folder kerja/izin. Semua baris memakai format buku besar (`label ······ nilai`).
+- `/status` menampilkan request terakhir (prompt + jawaban), jumlah request, total token sesi, jumlah pesan riwayat, model config, **respons model** dari provider (dibandingkan per nama model akhir — bila beda ditandai `⚠ beda dari config`), timeout stream, konfirmasi tulis, izin path luar, status `thinking`, dan folder kerja/izin. Ditampilkan sebagai panel popup dengan nilai rata kanan; ditutup dengan esc/enter.
 - `/clear` mereset `ctx` dan riwayat, tetapi **tidak** mereset total sesi (sesi = sejak app dijalankan).
 
 ### 8.3 Tool file & ekspor
@@ -501,7 +501,7 @@ Aturan:
 - `/bantu` menampilkan daftar perintah dengan kolom label selebar label terpanjang (maks 28) dan garis `─` selebar terminal; deskripsi panjang dipotong dengan `…`.
 - Menu `/` tampil sebagai **palette layar penuh** yang menggantikan composer: baris perintah selebar terminal (tanpa bingkai, tanpa margin), kolom kiri 20ch + deskripsi, item terpilih berlatar biru penuh + teks hitam, garis `─` penuh, footer `↑↓ pilih · tab lengkapi · enter jalankan · esc tutup`, lalu satu baris status. Tinggi daftar dibatasi agar transkrip tetap terlihat (minimal ±35% layar); daftar digulir mengikuti pilihan. Setelah `Esc`, palette tetap tertutup dan tidak muncul lagi sampai baris input dikosongkan.
 - Transkrip bisa digulir dengan **roda mouse** (3 baris per notch), **PgUp/PgDn**, atau **Shift+↑/↓** (buffer internal), juga saat bot sedang menjawab. `Up`/`Down` **tetap untuk riwayat input**, bukan scroll. **Drag mouse** di transkrip menyeleksi (highlight) dan otomatis menyalin ke clipboard saat dilepas (OSC 52 + clipboard OS); klik tanpa geser menghapus seleksi. Maksimum scroll = seluruh baris transkrip; posisi baca dipertahankan saat stream menambah baris, dan kembali ke bawah saat `Enter` mengirim pesan.
-- Picker provider/model/persona dan input API key tampil sebagai **kotak popup berbingkai** (`╭─╮ │ ╰─╯`, biru) dengan band judul biru di tengah layar (lebar ±64 kolom): seluruh frame diredupkan, lalu panel dengan judul bold + `esc` kanan, baris `saring ›` yang selalu tampil, daftar item (deskripsi rata kanan, terpilih latar biru penuh, item aktif `●`), dan footer. Input key memakai label + nilai disamarkan tanpa kotak.
+- Picker provider/model/persona dan input API key tampil sebagai **popup panel** dengan band judul biru di tengah layar (lebar ±64 kolom): seluruh frame diredupkan, lalu panel dengan judul bold + `esc` kanan, baris `saring ›` yang selalu tampil, daftar item (deskripsi rata kanan, terpilih latar biru penuh, item aktif `●`), dan footer. Input key memakai label + nilai disamarkan tanpa kotak.
 - Input API key memakai modal: nilai **disamarkan** (`•`), `Enter` simpan (validasi min 8 karakter), `Esc` batal.
 - **Shift+Tab** mengganti persona ke berikutnya (mis. `build` ↔ `plan`) tanpa mengirim input; status `persona  folder  model` di composer langsung berubah.
 - Saat menunggu jawaban, **baris bot** menampilkan spinner `⠋ <label>… <detik>s` (label tetap: `Memikir`, atau `Lanjut`/`Ulang`); warna berubah netral → biru (≥5s) → merah (≥15s). Spinner tetap tampil sampai round selesai (detik di-reset per round), dan berubah jadi `✎ <tool> · <n> kar` saat argumen tool mengalir. Jawaban >15 detik mengirim bel terminal.
@@ -603,7 +603,7 @@ Cek yang wajib lolos:
 42. Headless: `-p` mengembalikan hanya jawaban (tanpa ANSI/banner), `--output-format json` valid dengan `text/model/tokens/toolCalls`, prompt kosong → exit 2.
 43. Memori: `appendMemory` idempoten, menolak teks kosong/>400 karakter; `memoryPrompt` memuat penanda `[MEMORI]`; `buildInitMemory` membaca `package.json` (nama + skrip tes).
 44. Logo: `logoRows` menghasilkan 3 baris selebar 20; banner lebar memakai logo (5 baris), banner sempit tanpa logo (3 baris).
-45. Tema: lima palet bawaan tersedia; `setTheme('nord')` memakai biru dingin. Panel picker berbingkai kotak.
+45. Tema: lima palet bawaan tersedia; `setTheme('nord')` memakai biru dingin. Picker, /status, dan /cost tampil sebagai popup panel.
 
 ## 17. Kriteria penerimaan v0.1
 

@@ -94,8 +94,8 @@ child.stdin.write('\x7f\x7f');
 await wait(300);
 
 await step('/bantu', 'Perintah');
-await step('/status', 'Status sesi');
-await step('/cost', 'Biaya (perkiraan)');
+await step('/status', 'Status sesi', { esc: true });
+await step('/cost', 'Biaya (perkiraan)', { esc: true });
 await step('/theme mono', 'tema mono');
 await step('/theme default', 'tema default');
 await step('/theme preview', 'Tema (');

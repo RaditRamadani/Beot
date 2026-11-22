@@ -13,7 +13,7 @@ import { readDoc, MAX_CHARS } from './lib/readfile.js';
 import { isLocal, DEFAULTS, HOME_DIR, LEGACY_DIR, hostChanged } from './lib/config.js';
 import { COMMANDS, filterCommands } from './lib/commands.js';
 import { PROVIDERS, findProvider, mergeModels } from './lib/providers.js';
-import { visualWidth, ask, log as tuiLog, append, clearLog, init as tuiInit, setStatus, renderNow, beginInterrupt, endInterrupt, markLog, rollbackLog, diffBlock, tableLines, stripEsc, ledgerLine } from './lib/tui.js';
+import { visualWidth, ask, log as tuiLog, append, clearLog, init as tuiInit, setStatus, renderNow, info, beginInterrupt, endInterrupt, markLog, rollbackLog, diffBlock, tableLines, stripEsc, ledgerLine } from './lib/tui.js';
 import { highlight } from './lib/highlight.js';
 import { userContent, contentChars } from './lib/attach.js';
 import { resolveInside, listDir, writeFileTool, runFileTool, sensitiveReason, editFileTool } from './lib/filetools.js';
@@ -635,6 +635,16 @@ try {
   assert.ok(!chunks.join('').includes('▎'), 'tanpa bar kiri');
 
   chunks.length = 0;
+  let infoClosed = false;
+  const ip = info({ title: 'Uji Info', body: [{ text: 'kunci', right: 'nilai' }], foot: 'esc tutup' })
+    .then(() => { infoClosed = true; });
+  await new Promise((r) => setImmediate(r));
+  assert.ok(plain().includes('Uji Info') && plain().includes('nilai'), 'panel info tampil');
+  await press('escape');
+  await ip;
+  assert.ok(infoClosed, 'panel info tertutup dengan esc');
+
+  chunks.length = 0;
   append('halo \x1b[31mMERAH\x1b[0m selesai');
   renderNow();
   assert.ok(!chunks.join('').includes('\x1b[31m') && plain().includes('MERAH'), 'escape dari model dibuang');
@@ -669,7 +679,7 @@ try {
   await press('down');
   assert.ok(plain().includes('LATAR CHAT'), 'popup: latar chat tampil');
   assert.ok(plain().includes('saring'), 'popup: kolom saring tampil');
-  assert.ok(plain().includes('╭') && plain().includes('╰'), 'popup: berbingkai kotak');
+  assert.ok(!plain().includes('╭'), 'popup: tanpa bingkai luar');
   assert.ok(chunks.join('').includes('48;5;33'), 'popup: baris terpilih biru penuh');
   assert.ok(plain().includes('Pilih provider'), 'popup: judul tampil');
   await press('return', '\r');
