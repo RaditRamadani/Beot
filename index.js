@@ -21,7 +21,7 @@ import { costOf, priceFor, fmtUsd } from './lib/cost.js';
 import { memoryPrompt, readMemoryFiles, appendMemory, buildInitMemory, projectMemory } from './lib/memory.js';
 import { PROVIDERS, findProvider, fetchModels, mergeModels } from './lib/providers.js';
 import { userContent, contentChars } from './lib/attach.js';
-import { banner, c, hr, userPrompt, botPrefix, ok, warn, setTheme, themeName, themeNames, themeSwatch, registerThemes, setPlain } from './ui/theme.js';
+import { banner, c, hr, userPrompt, botPrefix, ok, warn, setTheme, themeName, themeNames, registerThemes, setPlain } from './ui/theme.js';
 
 const CONTEXT_WINDOW = 128000; // perkiraan; sesuaikan bila window model diketahui
 
@@ -343,7 +343,7 @@ function applyTheme(picked) {
   state.cfg.theme = picked;
   try { saveConfig(state.cfg); } catch { /* tema tetap dipakai untuk sesi ini */ }
   setStatus(composerStatus);
-  say(`${c.dim('tema')} ${c.gold(picked)} ${themeSwatch(picked)}`);
+  say(`${c.dim('tema')} ${c.gold(picked)}`);
   say(`  ${c.kw('const')} ${c.fn('warna')} = ${c.str('"biru"')} ${c.dim('// komentar')} ${c.num('42')}`);
   say(`  ${c.mint('✓')} sukses   ${c.maroon('✗')} gagal   ${c.gold('●')} aktif   ${c.lav('contoh teks')}`);
 }
@@ -355,7 +355,7 @@ async function handleTheme(arg) {
     say(c.bold(`Tema (${names.length})`));
     for (const t of names) {
       const cur = t === themeName() ? c.gold(' ← aktif') : '';
-      say(`  ${c.lav(t.padEnd(10))} ${themeSwatch(t)}  ${c.dim(THEME_DESC[t] || 'kustom (themes.json)')}${cur}`);
+      say(`  ${c.lav(t.padEnd(10))} ${c.dim(THEME_DESC[t] || 'kustom (themes.json)')}${cur}`);
     }
     return;
   }
@@ -367,7 +367,7 @@ async function handleTheme(arg) {
   }
   const picked = await ask('Pilih tema', {
     select: names.map((t) => ({
-      label: `${t}  ${themeSwatch(t)}`,
+      label: t,
       desc: THEME_DESC[t] || 'tema kustom (themes.json)',
       value: t,
       cur: t === themeName(),

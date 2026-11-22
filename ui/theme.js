@@ -83,14 +83,6 @@ export function themeNames() {
   return Object.keys(PALETTES);
 }
 
-// Contoh warna tema tanpa mengaktifkannya (untuk picker & /theme preview).
-export function themeSwatch(name) {
-  const p = PALETTES[name];
-  if (!p) return '';
-  const paint = (code, s) => (plainMode ? s : `${ESC}${code}m${s}${RESET}`);
-  return [p.gold, p.lav, p.mint, p.maroon, '2'].map((code) => paint(code, '■')).join('');
-}
-
 function build() {
   const p = PALETTES[current] || PALETTES.default;
   const color = (code) => (plainMode ? (s) => String(s) : (s) => `${ESC}${code}m${s}${RESET}`);

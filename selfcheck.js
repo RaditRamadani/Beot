@@ -26,7 +26,7 @@ import { costOf, priceFor, fmtUsd } from './lib/cost.js';
 import { memoryPrompt, appendMemory, buildInitMemory } from './lib/memory.js';
 import { buildPdf, buildXlsx, buildDocx, buildRtf, runExportTool } from './lib/exporttool.js';
 import { buildDiff, buildNewFileDiff } from './lib/diff.js';
-import { banner, c as themeColors, setTheme, registerThemes, themeNames, themeSwatch } from './ui/theme.js';
+import { banner, c as themeColors, setTheme, registerThemes, themeNames } from './ui/theme.js';
 import { logoRows, LOGO_WIDTH } from './ui/logo.js';
 
 process.env.BEOT_NO_CLIPBOARD = '1'; // jangan sentuh clipboard OS saat selftest
@@ -304,11 +304,10 @@ check('Logo: 3 baris rata + banner fallback', () => {
   assert.equal(narrow.split('\n').length, 3, 'fallback tiga baris');
 });
 
-check('Theme: 5 bawaan + swatch', () => {
+check('Theme: 5 bawaan + nord', () => {
   for (const name of ['default', 'mono', 'kontras', 'nord', 'senja']) {
     assert.ok(themeNames().includes(name), `${name} tersedia`);
   }
-  assert.equal(themeSwatch('default').replace(/\x1b\[[0-9;]*m/g, '').length, 5, 'swatch 5 blok');
   setTheme('nord');
   try {
     assert.ok(themeColors.gold('x').includes('38;5;75'), 'nord memakai biru dingin');
@@ -492,7 +491,7 @@ try {
   chunks.length = 0;
   await press('pageup');
   assert.ok(!plain().includes('baris 30'), 'PgUp menggulir ke atas');
-  assert.ok(plain().includes('PgDn turun'), 'indikator scroll tampil');
+  assert.ok(plain().includes('PgDn'), 'indikator scroll tampil');
   await press('pagedown');
   assert.ok(plain().includes('baris 30'), 'PgDn menggulir ke bawah');
   const logMark = markLog();
@@ -513,7 +512,7 @@ try {
   chunks.length = 0;
   await wheel(64);
   assert.ok(!plain().includes('baris 30'), 'roda mouse menggulir ke atas');
-  assert.ok(plain().includes('PgDn turun'), 'roda mouse menampilkan indikator scroll');
+  assert.ok(plain().includes('PgDn'), 'roda mouse menampilkan indikator scroll');
   await press('up');
   assert.ok(!plain().includes('baris 30'), 'panah Up tetap untuk riwayat, bukan scroll');
   await press('u', '\x15', { ctrl: true });
@@ -670,7 +669,7 @@ try {
   await press('down');
   assert.ok(plain().includes('LATAR CHAT'), 'popup: latar chat tampil');
   assert.ok(plain().includes('saring'), 'popup: kolom saring tampil');
-  assert.ok(!plain().includes('┌'), 'popup: tanpa bingkai (gaya OpenCode)');
+  assert.ok(plain().includes('╭') && plain().includes('╰'), 'popup: berbingkai kotak');
   assert.ok(chunks.join('').includes('48;5;33'), 'popup: baris terpilih biru penuh');
   assert.ok(plain().includes('Pilih provider'), 'popup: judul tampil');
   await press('return', '\r');

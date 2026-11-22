@@ -204,12 +204,12 @@ Saat baris **diawali `/`** dan belum ada spasi (masih token perintah), palette p
 - Setelah `Esc`, menu tetap tertutup (tidak terbuka lagi saat mengetik) sampai baris input dikosongkan.
 - Saat menu tertutup: `↑`/`↓` menelusuri riwayat input sesi ini.
 - Menu hanya aktif saat `stdin` dan `stdout` adalah TTY. Bila bukan (pipe/CI), input memakai pembaca baris sederhana tanpa menu; baris yang masuk sebelum prompt tetap diantrekan dan EOF mengakhiri dengan rapi.
-- Picker (`/key`, `/model`, `/persona`) dan input API key tampil sebagai **panel popup gelap dengan band judul biru** di tengah layar (identitas Beot): frame chat diredupkan; judul bold di kiri + `esc` di kanan; baris `saring ›` selalu tampil dan langsung memfilter saat mengetik; item dengan deskripsi **rata kanan**; baris terpilih berlatar biru penuh + teks putih; item aktif ditandai `●`; picker mulai dari item aktif. Input key memakai label + nilai disamarkan tanpa kotak. Footer `↑↓ pilih · enter ok · esc batal` (picker) atau `enter simpan · esc batal` (input). `Esc` batal; saat ditutup, overlay hilang. Butuh TTY; di mode pipe dianggap batal.
+- Picker (`/key`, `/model`, `/persona`) dan input API key tampil sebagai **kotak popup berbingkai** (`╭─╮ │ ╰─╯`, biru) dengan band judul biru di tengah layar (identitas Beot): frame chat diredupkan; judul bold di kiri + `esc` di kanan; baris `saring ›` selalu tampil dan langsung memfilter saat mengetik; item dengan deskripsi **rata kanan**; baris terpilih berlatar biru penuh + teks putih; item aktif ditandai `●`; picker mulai dari item aktif. Input key memakai label + nilai disamarkan tanpa kotak. Footer `↑↓ pilih · enter ok · esc batal` (picker) atau `enter simpan · esc batal` (input). `Esc` batal; saat ditutup, overlay hilang. Butuh TTY; di mode pipe dianggap batal.
 - Editor mendukung: kiri/kanan, Home/End, Backspace/Delete, Ctrl+U (hapus sebelum kursor), Ctrl+K (hapus setelah kursor), Ctrl+W (hapus kata sebelum kursor).
 - **Ctrl+O** (saat input kosong) membuka file manager: jelajahi folder kerja (`📁` folder, `📄` file, `..` naik), `📂 Ketik lokasi…` untuk membuka path absolut/relatif, `Enter` membaca file jadi konteks.
 - **`@` di composer**: mengetik `@` membuka daftar file di folder kerja (cache 10 dtk, maks 1.200 file, tampil 40 hasil). `Enter`/`Tab` menyisipkan `@<path> ` dan menandainya; saat pesan dikirim, isi file itu (maks 5 file × 40.000 karakter) disertakan sebagai `[FILE @<path>]`.
 - Saat composer kosong, tampil placeholder dim `Ketik pesan… (/ untuk menu · F2 gambar)`.
-- Saat transkrip digulir ke atas, muncul indikator `↑ <n> baris · PgDn turun` di atas composer.
+- Saat transkrip digulir ke atas, muncul indikator `↑ <n> baris · PgDn / shift+↓ turun` di atas composer.
 - Saat bot menjawab, `Esc` menghentikan request (Ctrl+C diabaikan) dan kembali ke prompt (`⚠ Dihentikan.`). Karakter yang kamu ketik selama bot menjawab **disimpan (typeahead)** dan muncul di prompt berikutnya.
 - **Tempel teks multi-baris** (bracketed paste, `\x1b[200~…\x1b[201~`): teks ditaruh utuh di composer (bisa beberapa baris, kursor tetap benar), tidak langsung terkirim. `Enter` mengirim seluruh blok sebagai **satu pesan**. CRLF dinormalkan jadi `\n`, Tab jadi dua spasi.
 - **Tempel gambar/dokumen** (Ctrl+V / Shift+Insert / F2): app membaca clipboard OS sendiri (PowerShell di Windows, osascript/pbpaste di macOS, wl-paste/xclip di Linux). Untuk gambar: PNG disimpan sementara, dibaca base64, file temp dihapus, lalu tampil chip `📎 gambar.png`. Untuk file dari Explorer (`.txt .md .csv .pdf`): dibaca sebagai teks dan tampil chip `📄 nama`. Gambar juga didukung dari file `.png/.jpg/.jpeg/.webp/.gif`. `Backspace` saat input kosong menghapus lampiran. Ctrl+V juga menangani paste teks bila terminal tidak meneruskannya. Sinyal didukung: keypress Ctrl+V, Shift+Insert, F2, dan bracketed paste kosong (clipboard gambar murni).
@@ -235,7 +235,7 @@ Saat baris **diawali `/`** dan belum ada spasi (masih token perintah), palette p
 | `/setting` | tampilkan pengaturan saat ini (key disamarkan), lalu popup untuk ubah `base_url`/`model`/`api_key`/`persona`/`stream_timeout`/`write_confirm`/`external`/`shell`/`web` atau buka file config |
 | `/status` | tampilkan token request terakhir (prompt/jawaban) + jumlah request & token sesi |
 | `/cost` | perkiraan biaya USD: request terakhir + total sesi, dari tabel harga publik (`lib/cost.js`), format buku besar; model tak dikenal → hanya token |
-| `/theme [nama]` | tanpa argumen: panel **Pilih tema** (swatch warna per tema, item aktif `●`, terpilih biru); `preview`/`daftar` = daftar semua tema + swatch; argumen nama: terapkan; tersimpan di config |
+| `/theme [nama]` | tanpa argumen: panel **Pilih tema** (item aktif `●`, terpilih biru); `preview`/`daftar` = daftar semua tema; argumen nama: terapkan; tersimpan di config |
 | `/thinking` | tampilkan/sembunyikan blok `✻ berpikir · <detik>` (toggle, tersimpan di config `thinking`) |
 | `/bantu` | daftar perintah |
 | `/exit` | keluar |
@@ -486,7 +486,7 @@ Aturan:
 
 ## 13. UI
 
-- Warna memakai ANSI 256; **lima palet bawaan**: `default` (biru Beot), `nord` (biru dingin), `senja` (amber hangat), `mono` (abu), `kontras` (biru/kuning) — dipilih lewat `/theme`, disimpan di config. Palet `default` memakai **satu aksen biru**; hijau hanya untuk `✓`, merah hanya untuk `✗`/error, sisanya netral + dim. Picker menampilkan **swatch** (`■■■■■`) per tema; setelah diterapkan muncul contoh `const warna = "biru" // komentar 42` + `✓ ✗ ●`.
+- Warna memakai ANSI 256; **lima palet bawaan**: `default` (biru Beot), `nord` (biru dingin), `senja` (amber hangat), `mono` (abu), `kontras` (biru/kuning) — dipilih lewat `/theme`, disimpan di config. Palet `default` memakai **satu aksen biru**; hijau hanya untuk `✓`, merah hanya untuk `✗`/error, sisanya netral + dim. Pemilihan tema bisa lewat `preview` (daftar semua) atau nama langsung; setelah diterapkan muncul contoh kode + status. Picker tidak memakai swatch.
 - Tema kustom dibaca dari `~/.beot/themes.json` (objek `nama → palet`). Hanya kunci palet yang dikenal dan nilai `^[0-9;]{1,24}$` yang diterima; kunci kosong mewarisi `default`; lima nama bawaan tidak bisa ditimpa. `/reload` memuat ulang file tema.
 - **Layar splash** (TTY ≥44 kolom, transkrip kosong, belum mengirim pesan): logo 3 baris (`█▀▀▄ █▀▀▀ █▀▀█ ▀▀█▀▀`, lebar 20) di tengah dengan **gradien biru** (33 → 39 → 75), tagline `v0.1 · chat AI di terminal · BYOK · nol server`, catatan startup (API key/skill proyek/memori/sesi) berwarna biru, composer selebar ±76 kolom di tengah, lalu hint `shift+tab persona · / menu · F2 gambar` dengan tombol berwarna biru. Splash **tetap selama mengetik** dan baru hilang saat pesan/perintah dikirim; setelah itu composer kembali di bawah. Terminal <44 kolom atau non-TTY: banner satu baris `◆ beot 0.1` di transkrip.
 - Garis pemisah 58 karakter `─`.
@@ -500,8 +500,8 @@ Aturan:
 - Ikon: `✓` sukses, `✗` gagal/tool error, `⚠` peringatan, `📄` file.
 - `/bantu` menampilkan daftar perintah dengan kolom label selebar label terpanjang (maks 28) dan garis `─` selebar terminal; deskripsi panjang dipotong dengan `…`.
 - Menu `/` tampil sebagai **palette layar penuh** yang menggantikan composer: baris perintah selebar terminal (tanpa bingkai, tanpa margin), kolom kiri 20ch + deskripsi, item terpilih berlatar biru penuh + teks hitam, garis `─` penuh, footer `↑↓ pilih · tab lengkapi · enter jalankan · esc tutup`, lalu satu baris status. Tinggi daftar dibatasi agar transkrip tetap terlihat (minimal ±35% layar); daftar digulir mengikuti pilihan. Setelah `Esc`, palette tetap tertutup dan tidak muncul lagi sampai baris input dikosongkan.
-- Transkrip bisa digulir dengan **roda mouse** (3 baris per notch) atau **PgUp/PgDn** (buffer internal), juga saat bot sedang menjawab. `Up`/`Down` **tetap untuk riwayat input**, bukan scroll. **Drag mouse** di transkrip menyeleksi (highlight) dan otomatis menyalin ke clipboard saat dilepas (OSC 52 + clipboard OS); klik tanpa geser menghapus seleksi. Maksimum scroll = seluruh baris transkrip; posisi baca dipertahankan saat stream menambah baris, dan kembali ke bawah saat `Enter` mengirim pesan.
-- Picker provider/model/persona dan input API key tampil sebagai **panel popup gelap dengan band judul biru** di tengah layar (lebar ±64 kolom): seluruh frame diredupkan, lalu panel dengan judul bold + `esc` kanan, baris `saring ›` yang selalu tampil, daftar item (deskripsi rata kanan, terpilih latar biru penuh, item aktif `●`), dan footer. Input key memakai label + nilai disamarkan tanpa kotak.
+- Transkrip bisa digulir dengan **roda mouse** (3 baris per notch), **PgUp/PgDn**, atau **Shift+↑/↓** (buffer internal), juga saat bot sedang menjawab. `Up`/`Down` **tetap untuk riwayat input**, bukan scroll. **Drag mouse** di transkrip menyeleksi (highlight) dan otomatis menyalin ke clipboard saat dilepas (OSC 52 + clipboard OS); klik tanpa geser menghapus seleksi. Maksimum scroll = seluruh baris transkrip; posisi baca dipertahankan saat stream menambah baris, dan kembali ke bawah saat `Enter` mengirim pesan.
+- Picker provider/model/persona dan input API key tampil sebagai **kotak popup berbingkai** (`╭─╮ │ ╰─╯`, biru) dengan band judul biru di tengah layar (lebar ±64 kolom): seluruh frame diredupkan, lalu panel dengan judul bold + `esc` kanan, baris `saring ›` yang selalu tampil, daftar item (deskripsi rata kanan, terpilih latar biru penuh, item aktif `●`), dan footer. Input key memakai label + nilai disamarkan tanpa kotak.
 - Input API key memakai modal: nilai **disamarkan** (`•`), `Enter` simpan (validasi min 8 karakter), `Esc` batal.
 - **Shift+Tab** mengganti persona ke berikutnya (mis. `build` ↔ `plan`) tanpa mengirim input; status `persona  folder  model` di composer langsung berubah.
 - Saat menunggu jawaban, **baris bot** menampilkan spinner `⠋ <label>… <detik>s` (label tetap: `Memikir`, atau `Lanjut`/`Ulang`); warna berubah netral → biru (≥5s) → merah (≥15s). Spinner tetap tampil sampai round selesai (detik di-reset per round), dan berubah jadi `✎ <tool> · <n> kar` saat argumen tool mengalir. Jawaban >15 detik mengirim bel terminal.
@@ -546,7 +546,7 @@ Aturan:
 - Composer selalu tampil di bawah, termasuk saat bot mengetik jawaban; baris jawaban yang sedang streaming tampil di area chat di atasnya.
 - Provider hanya OpenAI-compatible; tidak ada adapter OAuth/Anthropic/Copilot native.
 - TUI memakai **alternate screen** (full-screen). Riwayat disimpan di buffer internal (bukan scrollback terminal); scroll dengan **roda mouse** atau **PgUp/PgDn**. Saat keluar, layar dibersihkan (transkrip tidak didump). Di terminal lama yang tidak mendukung ANSI bisa berantakan (pakai Windows Terminal).
-- PgUp/PgDn dan roda mouse bekerja saat menunggu input maupun saat bot sedang menjawab; `Up`/`Down` bukan scroll (tetap riwayat input).
+- PgUp/PgDn, Shift+↑/↓, dan roda mouse bekerja saat menunggu input maupun saat bot sedang menjawab; `Up`/`Down` bukan scroll (tetap riwayat input).
 - Pencarian popup hanya substring case-insensitive (bukan fuzzy). Daftar panjang di-scroll mengikuti pilihan; tanpa mouse/scrollbar.
 - Daftar model preferensi live dari provider (`GET /models`, cache 60 dtk); katalog statis hanya cadangan, dan model manual selalu tersedia.
 - Picker tidak tersedia di mode non-TTY (dianggap batal).
@@ -603,7 +603,7 @@ Cek yang wajib lolos:
 42. Headless: `-p` mengembalikan hanya jawaban (tanpa ANSI/banner), `--output-format json` valid dengan `text/model/tokens/toolCalls`, prompt kosong → exit 2.
 43. Memori: `appendMemory` idempoten, menolak teks kosong/>400 karakter; `memoryPrompt` memuat penanda `[MEMORI]`; `buildInitMemory` membaca `package.json` (nama + skrip tes).
 44. Logo: `logoRows` menghasilkan 3 baris selebar 20; banner lebar memakai logo (5 baris), banner sempit tanpa logo (3 baris).
-45. Tema: lima palet bawaan tersedia; `themeSwatch` menghasilkan 5 blok; `setTheme('nord')` memakai biru dingin.
+45. Tema: lima palet bawaan tersedia; `setTheme('nord')` memakai biru dingin. Panel picker berbingkai kotak.
 
 ## 17. Kriteria penerimaan v0.1
 
