@@ -6,7 +6,7 @@ Terima kasih sudah mampir. Beot sengaja kecil: **satu proses, nol framework, sat
 
 ```sh
 npm install
-npm test        # 45 cek + 4 E2E, tanpa API key dan tanpa jaringan
+npm test        # 46 cek + 4 E2E, tanpa API key dan tanpa jaringan
 npm start       # coba manual
 ```
 
@@ -65,7 +65,7 @@ Cek dengan `/skill` lalu `npm test`.
 { "senja": { "gold": "38;5;214", "lav": "38;5;180" } }
 ```
 
-Hanya kode SGR (`angka;angka`). Nama `default`/`mono`/`kontras` tidak bisa ditimpa.
+Hanya kode SGR (`angka;angka`). Nama `default`/`nord`/`senja`/`mono`/`kontras` tidak bisa ditimpa.
 
 ## Menambah persona
 

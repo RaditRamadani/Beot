@@ -32,7 +32,7 @@ Tidak ada framework UI, tidak ada database, tidak ada HTTP server.
 
 ```
 index.js              REPL, perintah, alur chat
-selfcheck.js          45 cek logika tanpa API key (npm run selftest)
+selfcheck.js          46 cek logika tanpa API key (npm run selftest)
 tests/chat-e2e.mjs    E2E chat + tool + sesi + TUI lewat provider palsu (npm test)
 tests/confirm-e2e.mjs E2E default "tanya dulu": setuju & tolak
 tests/headless-e2e.mjs E2E `-p` (teks & JSON), tanpa TUI
@@ -235,7 +235,7 @@ Saat baris **diawali `/`** dan belum ada spasi (masih token perintah), palette p
 | `/setting` | tampilkan pengaturan saat ini (key disamarkan), lalu popup untuk ubah `base_url`/`model`/`api_key`/`persona`/`stream_timeout`/`write_confirm`/`external`/`shell`/`web` atau buka file config |
 | `/status` | tampilkan token request terakhir (prompt/jawaban) + jumlah request & token sesi |
 | `/cost` | perkiraan biaya USD: request terakhir + total sesi, dari tabel harga publik (`lib/cost.js`), format buku besar; model tak dikenal → hanya token |
-| `/theme [nama]` | tanpa argumen: panel **Pilih tema** (baris `saring ›`, item aktif `●`, terpilih biru); argumen: `default`/`mono`/`kontras`; tersimpan di config |
+| `/theme [nama]` | tanpa argumen: panel **Pilih tema** (swatch warna per tema, item aktif `●`, terpilih biru); `preview`/`daftar` = daftar semua tema + swatch; argumen nama: terapkan; tersimpan di config |
 | `/thinking` | tampilkan/sembunyikan blok `✻ berpikir · <detik>` (toggle, tersimpan di config `thinking`) |
 | `/bantu` | daftar perintah |
 | `/exit` | keluar |
@@ -486,8 +486,8 @@ Aturan:
 
 ## 13. UI
 
-- Warna memakai ANSI 256; tiga palet bawaan: `default`, `mono`, `kontras` (dipilih lewat panel `/theme`, disimpan di config). Palet `default` memakai **satu aksen biru**; hijau hanya untuk `✓`, merah hanya untuk `✗`/error, sisanya netral + dim.
-- Tema kustom dibaca dari `~/.beot/themes.json` (objek `nama → palet`). Hanya kunci palet yang dikenal dan nilai `^[0-9;]{1,24}$` yang diterima; kunci kosong mewarisi `default`; nama bawaan tidak bisa ditimpa. `/reload` memuat ulang file tema.
+- Warna memakai ANSI 256; **lima palet bawaan**: `default` (biru Beot), `nord` (biru dingin), `senja` (amber hangat), `mono` (abu), `kontras` (biru/kuning) — dipilih lewat `/theme`, disimpan di config. Palet `default` memakai **satu aksen biru**; hijau hanya untuk `✓`, merah hanya untuk `✗`/error, sisanya netral + dim. Picker menampilkan **swatch** (`■■■■■`) per tema; setelah diterapkan muncul contoh `const warna = "biru" // komentar 42` + `✓ ✗ ●`.
+- Tema kustom dibaca dari `~/.beot/themes.json` (objek `nama → palet`). Hanya kunci palet yang dikenal dan nilai `^[0-9;]{1,24}$` yang diterima; kunci kosong mewarisi `default`; lima nama bawaan tidak bisa ditimpa. `/reload` memuat ulang file tema.
 - **Layar splash** (TTY ≥44 kolom, transkrip kosong, belum mengirim pesan): logo 3 baris (`█▀▀▄ █▀▀▀ █▀▀█ ▀▀█▀▀`, lebar 20) di tengah dengan **gradien biru** (33 → 39 → 75), tagline `v0.1 · chat AI di terminal · BYOK · nol server`, catatan startup (API key/skill proyek/memori/sesi) berwarna biru, composer selebar ±76 kolom di tengah, lalu hint `shift+tab persona · / menu · F2 gambar` dengan tombol berwarna biru. Splash **tetap selama mengetik** dan baru hilang saat pesan/perintah dikirim; setelah itu composer kembali di bawah. Terminal <44 kolom atau non-TTY: banner satu baris `◆ beot 0.1` di transkrip.
 - Garis pemisah 58 karakter `─`.
 - `/bantu` menampilkan daftar perintah dengan kolom label selebar label terpanjang (maks 28) dan garis `─` selebar terminal; deskripsi panjang dipotong dengan `…`.
@@ -603,10 +603,11 @@ Cek yang wajib lolos:
 42. Headless: `-p` mengembalikan hanya jawaban (tanpa ANSI/banner), `--output-format json` valid dengan `text/model/tokens/toolCalls`, prompt kosong → exit 2.
 43. Memori: `appendMemory` idempoten, menolak teks kosong/>400 karakter; `memoryPrompt` memuat penanda `[MEMORI]`; `buildInitMemory` membaca `package.json` (nama + skrip tes).
 44. Logo: `logoRows` menghasilkan 3 baris selebar 20; banner lebar memakai logo (5 baris), banner sempit tanpa logo (3 baris).
+45. Tema: lima palet bawaan tersedia; `themeSwatch` menghasilkan 5 blok; `setTheme('nord')` memakai biru dingin.
 
 ## 17. Kriteria penerimaan v0.1
 
-1. `npm test` → 45 cek `ok` + 4 E2E hijau, exit code 0.
+1. `npm test` → 46 cek `ok` + 4 E2E hijau, exit code 0.
 2. Di mesin tanpa `~/.beot/config.json`, `node index.js` menampilkan banner 3 baris (wordmark + garis ganda + hint) dan composer tanpa meminta API key dan tanpa panggilan jaringan. Mengetik pesan chat hanya memberi peringatan; `/key` membuka picker provider.
 3. `/bantu` menampilkan seluruh perintah.
 4. Mengetik `/` mengganti composer dengan palette selebar layar (baris terpilih biru penuh); `↑`/`↓` memindahkan pilihan, `Tab` mengisi perintah + spasi, `Enter` menjalankan perintah terpilih. Setelah palette tertutup, composer kembali sebagai blok gelap dengan prompt biru dan status satu baris (`persona  folder  model` kiri, `ctx …` kanan).

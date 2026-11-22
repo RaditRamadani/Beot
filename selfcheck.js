@@ -26,7 +26,7 @@ import { costOf, priceFor, fmtUsd } from './lib/cost.js';
 import { memoryPrompt, appendMemory, buildInitMemory } from './lib/memory.js';
 import { buildPdf, buildXlsx, buildDocx, buildRtf, runExportTool } from './lib/exporttool.js';
 import { buildDiff, buildNewFileDiff } from './lib/diff.js';
-import { banner, c as themeColors, setTheme, registerThemes, themeNames } from './ui/theme.js';
+import { banner, c as themeColors, setTheme, registerThemes, themeNames, themeSwatch } from './ui/theme.js';
 import { logoRows, LOGO_WIDTH } from './ui/logo.js';
 
 process.env.BEOT_NO_CLIPBOARD = '1'; // jangan sentuh clipboard OS saat selftest
@@ -304,6 +304,19 @@ check('Logo: 3 baris rata + banner fallback', () => {
   assert.equal(narrow.split('\n').length, 3, 'fallback tiga baris');
 });
 
+check('Theme: 5 bawaan + swatch', () => {
+  for (const name of ['default', 'mono', 'kontras', 'nord', 'senja']) {
+    assert.ok(themeNames().includes(name), `${name} tersedia`);
+  }
+  assert.equal(themeSwatch('default').replace(/\x1b\[[0-9;]*m/g, '').length, 5, 'swatch 5 blok');
+  setTheme('nord');
+  try {
+    assert.ok(themeColors.gold('x').includes('38;5;75'), 'nord memakai biru dingin');
+  } finally {
+    setTheme('default');
+  }
+});
+
 check('Theme: palet bisa diganti', () => {
   const before = themeColors.mint('x');
   setTheme('mono');
@@ -318,16 +331,16 @@ check('Theme: palet bisa diganti', () => {
 
 check('Theme: kustom dari themes.json + validasi kode', () => {
   const res = registerThemes({
-    senja: { gold: '38;5;208', lav: '38;5;180' },
+    'kustom-uji': { gold: '38;5;208', lav: '38;5;180' },
     default: { gold: '1' },
     jahat: { gold: '38;5;220m\x1b[31' },
     kosong: {},
   });
-  assert.ok(themeNames().includes('senja'), 'tema sah terdaftar');
+  assert.ok(themeNames().includes('kustom-uji'), 'tema sah terdaftar');
   assert.ok(!themeNames().includes('jahat'), 'kode injeksi ditolak');
   assert.equal(res.added, 1, 'hanya satu tema sah');
   assert.ok(res.skipped >= 3, 'bawaan/kosong/injeksi dilewati');
-  setTheme('senja');
+  setTheme('kustom-uji');
   try {
     assert.ok(themeColors.gold('x').includes('38;5;208'), 'kode kustom dipakai');
     assert.ok(!themeColors.gold('x').includes('\x1b[31m'), 'escape tidak bocor');

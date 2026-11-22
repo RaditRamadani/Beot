@@ -30,6 +30,22 @@ const PALETTES = {
     kw: '38;5;201', str: '38;5;226', num: '38;5;208', cmt: '38;5;244', fn: '38;5;51', type: '38;5;39',
     orange: '38;5;45',
   },
+  nord: {
+    lav: '38;5;110', peach: '38;5;152', mint: '38;5;114', gold: '38;5;75', maroon: '38;5;131',
+    amber: '38;5;67', amberHi: '38;5;111',
+    dim: '2', bold: '1', selected: '48;5;60;97', userBlock: '48;5;236', popupBg: '48;5;235',
+    composerBar: '38;5;75;48;5;236', codeBar: '38;5;114',
+    kw: '38;5;111', str: '38;5;150', num: '38;5;179', cmt: '38;5;243', fn: '38;5;117', type: '38;5;110',
+    orange: '38;5;75',
+  },
+  senja: {
+    lav: '38;5;180', peach: '38;5;215', mint: '38;5;114', gold: '38;5;220', maroon: '38;5;131',
+    amber: '38;5;214', amberHi: '38;5;227',
+    dim: '2', bold: '1', selected: '48;5;179;30', userBlock: '48;5;236', popupBg: '48;5;235',
+    composerBar: '38;5;220;48;5;236', codeBar: '38;5;114',
+    kw: '38;5;204', str: '38;5;214', num: '38;5;179', cmt: '38;5;245', fn: '38;5;117', type: '38;5;110',
+    orange: '38;5;220',
+  },
 };
 
 export const THEMES = Object.keys(PALETTES);
@@ -41,7 +57,7 @@ export const c = {};
 // supaya file tema tidak bisa menyuntik escape terminal.
 export function registerThemes(map) {
   const allowed = new Set(Object.keys(PALETTES.default));
-  const builtin = new Set(['default', 'mono', 'kontras']);
+  const builtin = new Set(['default', 'mono', 'kontras', 'nord', 'senja']);
   let added = 0;
   let skipped = 0;
   for (const [name, palette] of Object.entries(map || {})) {
@@ -65,6 +81,14 @@ export function registerThemes(map) {
 
 export function themeNames() {
   return Object.keys(PALETTES);
+}
+
+// Contoh warna tema tanpa mengaktifkannya (untuk picker & /theme preview).
+export function themeSwatch(name) {
+  const p = PALETTES[name];
+  if (!p) return '';
+  const paint = (code, s) => (plainMode ? s : `${ESC}${code}m${s}${RESET}`);
+  return [p.gold, p.lav, p.mint, p.maroon, '2'].map((code) => paint(code, '■')).join('');
 }
 
 function build() {
