@@ -10,7 +10,7 @@ import { buildFileTools, runFileTool, buildSearchTools } from './lib/filetools.j
 import { buildExportTools, runExportTool, EXPORT_NAMES } from './lib/exporttool.js';
 import { readDoc } from './lib/readfile.js';
 import { buildDiff, buildNewFileDiff } from './lib/diff.js';
-import { ask, log as tuiLog, append as tuiAppend, clearLog, init as tuiInit, setStatus, shutdown, startLoading, stopLoading, beginInterrupt, endInterrupt, setTitle, bell, takeAttachment, diffBlock, markLog, rollbackLog, toolProgress, confirmInline, stripEsc, setFileSuggest, takeAtFiles, thoughtBlock, ledgerLine, setTodos } from './lib/tui.js';
+import { ask, log as tuiLog, append as tuiAppend, clearLog, init as tuiInit, setStatus, shutdown, startLoading, stopLoading, beginInterrupt, endInterrupt, setTitle, bell, takeAttachment, diffBlock, markLog, rollbackLog, toolProgress, confirmInline, stripEsc, visualWidth, setFileSuggest, takeAtFiles, thoughtBlock, ledgerLine, setTodos } from './lib/tui.js';
 import { COMMANDS } from './lib/commands.js';
 import { buildTodoTool, runTodoTool } from './lib/todo.js';
 import { initSession, appendTurn, listSessions, readSession, latestSession, pruneSessions } from './lib/session.js';
@@ -162,31 +162,38 @@ function cyclePersona() {
 }
 
 function handleStatus() {
+  const width = Math.max(40, (process.stdout.columns || 80) - 2);
+  const room = Math.max(12, width - 26);
+  const row = (label, value) => {
+    const text = String(value ?? '');
+    const short = visualWidth(text) > room ? `${stripEsc(text).slice(0, Math.max(1, room - 1))}…` : text;
+    say(ledgerLine(label, short, width));
+  };
   const last = state.last;
   say(c.bold('Status sesi'));
   if (!state.session.requests) {
-    say('  request terakhir : belum ada');
+    row('request terakhir', c.dim('belum ada'));
   } else {
-    say(`  request terakhir : ${fmtK(last.total)} token${last.estimated ? ' (estimasi)' : ''}`);
+    row('request terakhir', `${fmtK(last.total)} token${last.estimated ? ' (estimasi)' : ''}`);
     if (last.prompt != null || last.completion != null) {
-      say(`  rincian          : ${fmtK(last.prompt ?? 0)} prompt + ${fmtK(last.completion ?? 0)} jawaban`);
+      row('rincian', `${fmtK(last.prompt ?? 0)} prompt + ${fmtK(last.completion ?? 0)} jawaban`);
     }
-    say(`  konteks          : ${fmtK(last.total)} / ${fmtK(CONTEXT_WINDOW)} (${contextPct(last.total)}%) ${contextBar(last.total)}`);
+    row('konteks', `${contextPct(last.total)}% ${contextBar(last.total)}`);
   }
-  say(`  sesi ini         : ${state.session.requests} request · ${fmtK(state.session.tokens)} token`);
-  say(`  riwayat          : ${state.history.length} pesan`);
-  say(`  model            : ${stripEsc(state.cfg.model)}`);
+  row('sesi ini', `${state.session.requests} request · ${fmtK(state.session.tokens)} token`);
+  row('riwayat', `${state.history.length} pesan`);
+  row('model', stripEsc(state.cfg.model));
   const base = (v) => String(v || '').split('/').pop().toLowerCase();
   if (state.last.reported) {
     const same = base(state.last.reported) === base(state.cfg.model);
-    say(`  respons model    : ${c.mint(stripEsc(state.last.reported))}${same ? '' : c.gold('  ⚠ beda dari config (router fallback?)')}`);
+    row('respons model', `${c.mint(stripEsc(state.last.reported))}${same ? '' : c.gold(' ⚠ beda dari config')}`);
   } else {
-    say('  respons model    : -');
+    row('respons model', '-');
   }
-  say(`  timeout stream   : ${Number(state.cfg.stream_timeout) || 90} dtk`);
-  say(`  thinking         : ${state.cfg.thinking === false ? 'off' : 'on'}`);
-  say(`  folder kerja     : ${state.cwd}`);
-  if (state.extraDirs.length) say(`  folder izin      : ${state.extraDirs.join(', ')}`);
+  row('timeout stream', `${Number(state.cfg.stream_timeout) || 90} dtk`);
+  row('thinking', state.cfg.thinking === false ? 'off' : 'on');
+  row('folder kerja', stripEsc(state.cwd));
+  if (state.extraDirs.length) row('folder izin', state.extraDirs.join(', '));
 }
 
 async function handleFiles() {
@@ -351,13 +358,18 @@ async function handleTheme(arg) {
 }
 
 function showHelp() {
-  say(hr());
-  say(`${c.bold('Perintah')}`);
-  for (const { cmd, hint, desc } of COMMANDS) {
-    const label = `${cmd}${hint ? ` ${hint}` : ''}`.padEnd(17);
-    say(`  ${c.peach(label)} ${desc}`);
+  const width = Math.max(40, (process.stdout.columns || 80) - 1);
+  const labels = COMMANDS.map(({ cmd, hint }) => `${cmd}${hint ? ` ${hint}` : ''}`);
+  const pad = Math.min(28, Math.max(17, ...labels.map((l) => l.length)));
+  const room = Math.max(12, width - pad - 4);
+  say(hr(width));
+  say(c.bold('Perintah'));
+  for (let i = 0; i < COMMANDS.length; i++) {
+    const { desc } = COMMANDS[i];
+    const text = desc.length > room ? `${desc.slice(0, Math.max(1, room - 1))}…` : desc;
+    say(`  ${c.peach(labels[i].padEnd(pad))} ${c.dim(text)}`);
   }
-  say(hr());
+  say(hr(width));
 }
 
 function printError(err) {
@@ -1181,17 +1193,18 @@ async function chat(userText, attachment = null) {
 }
 
 function handleCost() {
+  const width = Math.max(40, (process.stdout.columns || 80) - 2);
   const price = priceFor(state.cfg.model);
   say(c.bold('Biaya (perkiraan)'));
-  say(`  ${c.dim('model')}    ${c.mint(stripEsc(state.cfg.model))}`);
+  say(ledgerLine('model', c.mint(stripEsc(state.cfg.model)), width));
   if (!price) {
     say(c.dim('  harga model ini belum ada di tabel — token tetap dihitung di /status.'));
     return;
   }
-  say(`  ${c.dim('tarif')}    ${c.dim(`$${price.input}/1M masuk · $${price.output}/1M keluar`)}`);
+  say(ledgerLine('tarif', c.dim(`$${price.input}/1M masuk · $${price.output}/1M keluar`), width));
   const last = state.last.cost != null ? c.mint(fmtUsd(state.last.cost)) : c.dim('-');
-  say(`  ${c.dim('request')}  ${last} ${c.dim(`${state.last.prompt ?? 0} masuk · ${state.last.completion ?? 0} keluar`)}`);
-  say(`  ${c.dim('sesi')}     ${c.gold(fmtUsd(state.session.cost))} ${c.dim(`${fmtK(state.session.tokens)} token · ${state.session.requests} request`)}`);
+  say(ledgerLine('request', `${last} ${c.dim(`${state.last.prompt ?? 0} masuk · ${state.last.completion ?? 0} keluar`)}`, width));
+  say(ledgerLine('sesi', `${c.gold(fmtUsd(state.session.cost))} ${c.dim(`${fmtK(state.session.tokens)} token · ${state.session.requests} request`)}`, width));
   say(c.dim('  perkiraan dari harga publik, bukan tagihan resmi.'));
 }
 
