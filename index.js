@@ -154,7 +154,7 @@ function composerStatus() {
   const folder = path.basename(state.cwd) || state.cwd;
   const extra = state.extraDirs.length ? ` +${state.extraDirs.length}` : '';
   return {
-    left: `${c.gold(state.persona?.nama || '-')}  ${c.dim(folder)}${c.dim(extra)}  ${c.dim(stripEsc(state.cfg.model))}`,
+    left: `${c.gold(state.persona?.nama || '-')}  ${c.dim(folder)}${c.dim(extra)}  ${stripEsc(state.cfg.model)}`,
     right,
   };
 }
