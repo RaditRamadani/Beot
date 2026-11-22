@@ -13,7 +13,7 @@ import { readDoc, MAX_CHARS } from './lib/readfile.js';
 import { isLocal, DEFAULTS, HOME_DIR, LEGACY_DIR, hostChanged } from './lib/config.js';
 import { COMMANDS, filterCommands } from './lib/commands.js';
 import { PROVIDERS, findProvider, mergeModels } from './lib/providers.js';
-import { visualWidth, ask, log as tuiLog, append, clearLog, init as tuiInit, setStatus, renderNow, info, beginInterrupt, endInterrupt, markLog, rollbackLog, diffBlock, tableLines, stripEsc, ledgerLine } from './lib/tui.js';
+import { visualWidth, ask, log as tuiLog, append, clearLog, init as tuiInit, setStatus, renderNow, info, confirmInline, beginInterrupt, endInterrupt, markLog, rollbackLog, diffBlock, tableLines, stripEsc, ledgerLine } from './lib/tui.js';
 import { highlight } from './lib/highlight.js';
 import { userContent, contentChars } from './lib/attach.js';
 import { resolveInside, listDir, writeFileTool, runFileTool, sensitiveReason, editFileTool } from './lib/filetools.js';
@@ -645,6 +645,13 @@ try {
   assert.ok(infoClosed, 'panel info tertutup dengan esc');
 
   chunks.length = 0;
+  const cp = confirmInline(`Jalankan: ${'x'.repeat(120)}`);
+  await new Promise((r) => setImmediate(r));
+  assert.ok((plain().match(/x/g) || []).length >= 100, 'perintah panjang tampil utuh (tidak dipotong)');
+  await press('escape');
+  await cp;
+
+  chunks.length = 0;
   append('halo \x1b[31mMERAH\x1b[0m selesai');
   renderNow();
   assert.ok(!chunks.join('').includes('\x1b[31m') && plain().includes('MERAH'), 'escape dari model dibuang');
@@ -1006,9 +1013,15 @@ await acheck('Biaya: harga model & hitungan', () => {
 
 await acheck('Web: host privat & HTML jadi teks', async () => {
   assert.equal(isPrivateHost('localhost'), true);
+  assert.equal(isPrivateHost('localhost.'), true, 'titik akhir tetap lokal');
   assert.equal(isPrivateHost('127.0.0.1'), true);
   assert.equal(isPrivateHost('192.168.1.5'), true);
   assert.equal(isPrivateHost('172.20.0.1'), true);
+  assert.equal(isPrivateHost('[::1]'), true, 'IPv6 loopback');
+  assert.equal(isPrivateHost('[::ffff:7f00:1]'), true, 'IPv4-mapped IPv6');
+  assert.equal(isPrivateHost('[::ffff:127.0.0.1]'), true, 'mapped dotted');
+  assert.equal(isPrivateHost('[fe80::1]'), true, 'link-local');
+  assert.equal(isPrivateHost('[fd00::1]'), true, 'unique local');
   assert.equal(isPrivateHost('example.com'), false);
   const privateErr = await runWebTool({ url: 'http://127.0.0.1/x' }, { webMode: 'allow' }).then(() => null, (e) => e);
   assert.ok(privateErr && /privat/i.test(privateErr.message), 'localhost diblokir');
@@ -1096,6 +1109,27 @@ await acheck('Memori: /ingat idempoten, prompt, /init', () => {
     assert.throws(() => appendMemory('x'.repeat(401), { cwd: dir }), /400/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+await acheck('Keamanan: grep/glob tidak menembus junction', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'beot-junc-'));
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'beot-junc-out-'));
+  try {
+    fs.writeFileSync(path.join(outside, 'rahasia.txt'), 'TOPSECRET-123\n');
+    fs.writeFileSync(path.join(root, 'biasa.txt'), 'aman\n');
+    try { fs.symlinkSync(outside, path.join(root, 'link'), 'junction'); } catch { /* tanpa izin: lewati */ }
+    const g = await runFileTool('grep_file', JSON.stringify({ pattern: 'TOPSECRET' }), { cwd: root });
+    assert.ok(!String(g.content).includes('TOPSECRET'), 'grep tidak bocor lewat junction');
+    const gl = await runFileTool('glob_file', JSON.stringify({ pattern: '**/*.txt' }), { cwd: root });
+    assert.ok(!String(gl.content).includes('rahasia.txt'), 'glob tidak menyebut file luar');
+    const long = await runShellTool({ command: `echo ${'a'.repeat(500)}` }, { cwd: root, shellMode: 'allow' })
+      .then(() => null, (e) => e);
+    assert.ok(long && /panjang/i.test(long.message), 'perintah >400 karakter ditolak');
+  } finally {
+    for (const d of [root, outside]) {
+      try { fs.rmSync(d, { recursive: true, force: true }); } catch { /* junction terkunci */ }
+    }
   }
 });
 

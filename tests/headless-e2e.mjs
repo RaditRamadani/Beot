@@ -68,6 +68,40 @@ const empty = await run(['-p', '']);
 ok(empty.code === 2, `prompt kosong: exit 2 (dapat ${empty.code})`);
 ok(/Prompt kosong/.test(empty.err), 'prompt kosong: pesan di stderr');
 
+// Skenario keamanan: model minta write_file -> headless harus menolak.
+const server2 = http.createServer((req, res) => {
+  let raw = '';
+  req.on('data', (d) => { raw += d; });
+  req.on('end', () => {
+    if (req.url.endsWith('/models')) { res.writeHead(404); res.end('{}'); return; }
+    const body = JSON.parse(raw || '{}');
+    const after = body.messages.some((m) => m.role === 'tool');
+    res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+    const send = (o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
+    if (!after) {
+      send({ choices: [{ delta: { tool_calls: [{ index: 0, id: 'w1', type: 'function', function: { name: 'write_file', arguments: JSON.stringify({ path: 'ditolak.txt', content: 'rahasia' }) } }] } }] });
+      send({ choices: [{ delta: {}, finish_reason: 'tool_calls' }] });
+    } else {
+      send({ choices: [{ delta: { content: 'ditolak' } }] });
+      send({ choices: [{ delta: {}, finish_reason: 'stop' }], usage: { prompt_tokens: 5, completion_tokens: 2, total_tokens: 7 } });
+    }
+    res.write('data: [DONE]\n\n');
+    res.end();
+  });
+});
+await new Promise((r) => server2.listen(0, '127.0.0.1', r));
+fs.writeFileSync(path.join(home, '.beot', 'config.json'), JSON.stringify({
+  base_url: `http://127.0.0.1:${server2.address().port}/v1`,
+  api_key: 'test', model: 'mock', persona: 'build', stream_timeout: 20,
+}));
+const denied = await run(['-p', 'tulis file', '--output-format', 'json']);
+let deniedJson = null;
+try { deniedJson = JSON.parse(denied.out); } catch { /* di bawah */ }
+ok(denied.code === 0, `headless tulis: tetap sukses menjawab (dapat ${denied.code})`);
+ok(!fs.existsSync(path.join(work, 'ditolak.txt')), 'headless: write_file ditolak (file tidak dibuat)');
+ok(deniedJson && deniedJson.toolCalls?.[0]?.ok === false, 'headless: toolCalls melaporkan gagal');
+server2.close();
+
 server.close();
 for (const dir of [work, home]) { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* */ } }
 

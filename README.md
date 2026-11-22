@@ -37,7 +37,7 @@ Ini intinya: ...
 git clone <repo-ini> beot
 cd beot
 npm install
-npm test     # opsional: 46 cek logika + 4 E2E dengan provider palsu
+npm test     # opsional: 47 cek logika + 4 E2E dengan provider palsu
 npm link     # opsional: bikin perintah `beot` bisa dipanggil dari folder mana saja
 npm start
 ```
@@ -257,10 +257,12 @@ Cara menghemat: matikan tool yang tidak dipakai (`/setting` → izin shell/web �
 - Saat chat, isi pesan + teks file yang kamu panggil dikirim **langsung ke provider AI pilihanmu** (Google/Groq/dll) — sama seperti memakai situs mereka.
 - **Default aman**: file **ditanya dulu** sebelum ditulis (`? Simpan <nama>?`) dan akses path di luar folder kerja juga **ditanya** (`Izinkan akses?`). Bisa dilonggarkan lewat `/setting` → `konfirmasi tulis` / `izin path luar`. App tidak pernah menghapus file.
 - **Prompt injection itu nyata**: isi file yang dibaca model adalah input tak terpercaya. Blokir di bawah berbasis **path**, bukan pemahaman isi — file biasa berisi instruksi jahat tetap bisa membuat model membaca file lain yang tidak diblokir, lalu isinya terkirim ke provider. Karena itu default tulis = tanya dulu. Jangan buka folder yang berisi rahasia saat memakai model yang belum kamu percaya.
-- Path di-resolve dengan **realpath**: symlink/junction yang mengarah keluar folder izin tetap ditolak. Escape ANSI dari isi model/file dibuang saat render (termasuk C1/OSC/DCS), jadi isi asing tidak bisa menyuntik perintah terminal. File sensitif **diblokir** untuk dibaca/dicari/ditulis lewat tool: `.env*`, kredensial (`id_rsa`, `.npmrc`, `.netrc`, `.ssh/`, `.aws/`), folder `.git/`, dan seluruh `~/.beot/` (config berisi API key). Jadi API key tidak pernah terkirim ke provider lewat tool.
+- Path di-resolve dengan **realpath**: symlink/junction yang mengarah keluar folder izin tetap ditolak, termasuk saat `grep_file`/`glob_file` menyapu folder. Escape ANSI dari isi model/file dibuang saat render (termasuk C1/OSC/DCS), jadi isi asing tidak bisa menyuntik perintah terminal. File sensitif **diblokir** untuk dibaca/dicari/ditulis lewat tool: `.env*`, kredensial (`id_rsa`, `.npmrc`, `.netrc`, `.ssh/`, `.aws/`), folder `.git/`, dan seluruh `~/.beot/` (config berisi API key). Jadi API key tidak pernah terkirim ke provider lewat tool.
 - **Ganti host = key dihapus**: kalau `base_url` diarahkan ke host lain (lewat `/model base` atau `/setting`), `api_key` lama otomatis dikosongkan supaya tidak terkirim ke server baru; isi lagi lewat `/key`.
-- **Shell butuh izin**: tool `bash` default `ask` (setiap perintah minta `y`), dengan tolak-keras yang tidak bisa di-allow. `shell: allow` hanya untuk folder yang kamu percaya — model bisa menjalankan apa pun yang tidak masuk daftar tolak.
-- **Web hanya publik**: `web_fetch` menolak `localhost`, `127.*`, `10.*`, `192.168.*`, `172.16–31.*`, `169.254.*`, dan `::1`. Default `ask` (satu konfirmasi per host); `web: allow` untuk otomatis, `deny` untuk mematikan.
+- **Shell butuh izin**: tool `bash` default `ask` — prompt menampilkan **perintah penuh** (dibungkus, bukan dipotong), perintah >400 karakter ditolak, dengan tolak-keras yang tidak bisa di-allow. `shell: allow` hanya untuk folder yang kamu percaya — model bisa menjalankan apa pun yang tidak masuk daftar tolak, termasuk membaca variabel environment-mu.
+- **Web hanya publik**: `web_fetch` menolak `localhost`, `localhost.`, `127.*`, `10.*`, `192.168.*`, `172.16–31.*`, `169.254.*`, `::1`, `[::ffff:…]`, dan `*.local`; redirect divalidasi **per-hop** (tidak bisa dialihkan ke host privat), body dibatasi 1 MB saat streaming. Default `ask`; `web: allow` untuk otomatis, `deny` untuk mematikan.
+- **Headless aman**: `beot -p` tidak membuat sesi dan **menolak semua tool tulis/shell/web** (tidak ada manusia untuk menyetujui izin) — hanya tool baca yang berjalan.
+- **File sesi** dibuat `0600` di folder `~/.beot/sessions` (`0700`), hanya berisi pesan user/assistant — tanpa API key dan tanpa tool call.
 - **Identitas**: `[IDENTITAS]` (APP/MODEL/PEMBUAT) dikirim tiap request; `/status` menampilkan `respons model` dari provider + peringatan bila beda config (router fallback).
 - Jangan jalankan di komputer bersama; jangan bagikan file config-mu.
 - Kalau key bocor: hapus key di dashboard provider, buat yang baru.
@@ -274,7 +276,7 @@ Cara menghemat: matikan tool yang tidak dipakai (`/setting` → izin shell/web �
 - Tool loop dibatasi **16 langkah** per pesan; jika habis, muncul peringatan dan konteks tetap disimpan — ketik "lanjutkan".
 - Tool `bash` menjalankan perintah di folder kerja, **selalu lewat izin** (default `ask`), dengan daftar tolak-keras (`rm -rf /`, `format`, `shutdown`, `curl|sh`, dll). Bisa dimatikan lewat `/setting` → `izin shell` → `Matikan`.
 - Agent: `list_dir`/`read_file`/`write_file`/`edit_file` + `grep_file`/`glob_file` + `bash` (izin `y/n`, daftar tolak-keras) + `web_fetch` (URL publik saja) + `todo_write` + `export_pdf`/`export_xlsx`/`export_docx`/`export_rtf` (tulis dengan konfirmasi, hanya di folder kerja/folder izin) + `skill`; belum ada MCP.
-- Tes ada di repo: `npm test` = `selfcheck.js` (46 cek) + 4 E2E: chat+tools, konfirmasi tulis, headless `-p`, dan **semua perintah/popup menu**. Tidak butuh API key. CI menjalankan tes di Windows & Linux (Node 20/22).
+- Tes ada di repo: `npm test` = `selfcheck.js` (47 cek) + 4 E2E: chat+tools, konfirmasi tulis, headless `-p`, dan **semua perintah/popup menu**. Tidak butuh API key. CI menjalankan tes di Windows & Linux (Node 20/22).
 - Error `524`/`502`/`503` berasal dari gateway/provider, bukan dari Beot; app hanya menampilkan status + pesan ramah, bukan halaman HTML mentah. Error yang dikirim **di dalam stream** juga ditampilkan, tidak ditelan.
 - Kalau provider mengembalikan **jawaban kosong** (tanpa teks, thought, atau tool), Beot mengulang sekali lalu menampilkan `⚠ Provider tidak mengirim jawaban (kosong). Coba lagi.`
 - Picker provider hanya untuk endpoint OpenAI-compatible; layanan yang butuh OAuth atau API non-OpenAI (mis. Copilot, Anthropic native) belum didukung — pakai opsi custom kalau endpoint-nya kompatibel.

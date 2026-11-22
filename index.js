@@ -924,8 +924,7 @@ function ensureSession() {
 }
 
 async function confirmShell(cmd) {
-  const short = cmd.length > 62 ? `${cmd.slice(0, 59)}…` : cmd;
-  return confirmInline(`Jalankan: ${stripEsc(short)}`);
+  return confirmInline(`Jalankan: ${stripEsc(cmd)}`);
 }
 
 async function confirmFetch(host) {
@@ -1136,7 +1135,7 @@ async function chat(userText, attachment = null) {
           res = await runTool(call, planning);
         }
         if (res.skill) usedSkills.push(res.skill);
-        state.lastTools.push({ name: call.function.name, ok: !res.error });
+        state.lastTools.push({ name: call.function.name, ok: !res.error && !res.refused });
         const took = fmtDuration(Date.now() - tCall);
         if (res.error) say(`${c.maroon('✗')} ${stripEsc(call.function.name)} · ${stripEsc(res.error)}`);
         else if (res.note) {

@@ -32,7 +32,7 @@ Tidak ada framework UI, tidak ada database, tidak ada HTTP server.
 
 ```
 index.js              REPL, perintah, alur chat
-selfcheck.js          46 cek logika tanpa API key (npm run selftest)
+selfcheck.js          47 cek logika tanpa API key (npm run selftest)
 tests/chat-e2e.mjs    E2E chat + tool + sesi + TUI lewat provider palsu (npm test)
 tests/confirm-e2e.mjs E2E default "tanya dulu": setuju & tolak
 tests/headless-e2e.mjs E2E `-p` (teks & JSON), tanpa TUI
@@ -604,10 +604,12 @@ Cek yang wajib lolos:
 43. Memori: `appendMemory` idempoten, menolak teks kosong/>400 karakter; `memoryPrompt` memuat penanda `[MEMORI]`; `buildInitMemory` membaca `package.json` (nama + skrip tes).
 44. Logo: `logoRows` menghasilkan 3 baris selebar 20; banner lebar memakai logo (5 baris), banner sempit tanpa logo (3 baris).
 45. Tema: lima palet bawaan tersedia; `setTheme('nord')` memakai biru dingin. Picker, /status, dan /cost tampil sebagai popup panel.
+46. Web/SSRF: `isPrivateHost` menolak `localhost.`, `[::ffff:7f00:1]`, `[fe80::1]`, `[fd00::1]`; redirect divalidasi per-hop (`redirect: manual`, maks 4) dan body dibatasi 1 MB saat streaming.
+47. Sandbox pencarian: `grep_file`/`glob_file` memakai realpath + cek folder izin (junction tidak menembus); `write_file` ke `~/.beot/config.json` diblokir; perintah shell >400 karakter ditolak; headless menolak `write_file` dan melaporkan `toolCalls[].ok=false`.
 
 ## 17. Kriteria penerimaan v0.1
 
-1. `npm test` → 46 cek `ok` + 4 E2E hijau, exit code 0.
+1. `npm test` → 47 cek `ok` + 4 E2E hijau, exit code 0.
 2. Di mesin tanpa `~/.beot/config.json`, `node index.js` menampilkan banner 3 baris (wordmark + garis ganda + hint) dan composer tanpa meminta API key dan tanpa panggilan jaringan. Mengetik pesan chat hanya memberi peringatan; `/key` membuka picker provider.
 3. `/bantu` menampilkan seluruh perintah.
 4. Mengetik `/` mengganti composer dengan palette selebar layar (baris terpilih biru penuh); `↑`/`↓` memindahkan pilihan, `Tab` mengisi perintah + spasi, `Enter` menjalankan perintah terpilih. Setelah palette tertutup, composer kembali sebagai blok gelap dengan prompt biru dan status satu baris (`persona  folder  model` kiri, `ctx …` kanan).
@@ -629,4 +631,5 @@ Cek yang wajib lolos:
 20. Sesi: mengirim pesan membuat `.jsonl` di `~/.beot/sessions`; `--continue` memuat sesi terakhir; `/compact` mengganti riwayat dengan satu pesan ringkasan; `/sessions` memuat sesi pilihan.
 21. `/cost` menampilkan tarif model, biaya request terakhir, dan total sesi; model tanpa harga hanya menampilkan token. `web_fetch` menolak `127.0.0.1` dan `file://`, dan default `ask` sebelum mengunduh.
 22. `beot -p "..."` mencetak jawaban saja (tanpa banner/ANSI) dan keluar; `--output-format json` menghasilkan JSON valid; tulis/shell/web ditolak di mode headless.
+24. Headless menolak `write_file` (tidak ada file dibuat) tetapi tetap menjawab; `toolCalls` melaporkan `ok:false`.
 23. `/init` membuat `BEOT.md` (tidak menimpa tanpa `--force`); `/ingat` menambah baris idempoten; startup menampilkan `memori: …`; isi memori muncul di system prompt (`[MEMORI]`).
