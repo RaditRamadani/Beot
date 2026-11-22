@@ -18,6 +18,7 @@ import { summarize, compactedHistory } from './lib/compact.js';
 import { buildShellTool, runShellTool } from './lib/shell.js';
 import { buildWebTool, runWebTool } from './lib/web.js';
 import { costOf, priceFor, fmtUsd } from './lib/cost.js';
+import { memoryPrompt, readMemoryFiles, appendMemory, buildInitMemory, projectMemory } from './lib/memory.js';
 import { PROVIDERS, findProvider, fetchModels, mergeModels } from './lib/providers.js';
 import { userContent, contentChars } from './lib/attach.js';
 import { banner, c, hr, userPrompt, botPrefix, ok, warn, setTheme, themeName, themeNames, registerThemes, setPlain } from './ui/theme.js';
@@ -82,6 +83,8 @@ function systemPrompt() {
     parts.push('MODE PLAN: dilarang membuat/mengubah file atau mengeksekusi perubahan. Berikan rencana langkah bernomor, opsi + trade-off, risiko, dan cara verifikasi.');
   }
   parts.push(`[FOLDER KERJA: ${state.cwd}]`);
+  const memory = memoryPrompt(state.cwd);
+  if (memory) parts.push(memory);
   if (state.extraDirs.length) parts.push(`[FOLDER TAMBAHAN: ${state.extraDirs.join(', ')}]`);
   parts.push(state.cfg.external === 'trust'
     ? 'IZIN PATH: path absolut di luar folder kerja DIIZINKAN OTOMATIS (mode trust). Jangan menolak hanya karena file di luar folder; langsung panggil tool dengan path relatif/absolut. Hanya .git dan node_modules yang dilarang.'
@@ -1192,6 +1195,31 @@ function handleCost() {
   say(c.dim('  perkiraan dari harga publik, bukan tagihan resmi.'));
 }
 
+function handleInit(arg) {
+  const file = projectMemory(state.cwd);
+  if (fs.existsSync(file) && arg !== '--force') {
+    return say(warn('BEOT.md sudah ada. Pakai /init --force untuk menimpa, atau edit langsung.'));
+  }
+  const text = buildInitMemory(state.cwd);
+  fs.writeFileSync(file, text);
+  const lines = text.split('\n').filter((l) => l.trim() && !l.startsWith('#')).length;
+  say(ok(`Memori proyek dibuat: BEOT.md (${lines} baris)`));
+  say(c.dim('  Edit file itu untuk menambah aturan; otomatis dibaca tiap request.'));
+}
+
+function handleIngat(arg) {
+  const global = /^--global(\s|$)/i.test(arg);
+  const text = arg.replace(/^--global\s*/i, '').trim();
+  if (!text) return say(warn('Pakai: /ingat [--global] <fakta singkat>. Contoh: /ingat tes pakai npm test'));
+  try {
+    const res = appendMemory(text, { cwd: state.cwd, global });
+    if (res.added) return say(ok(`Diingat (${global ? 'global' : 'proyek'}): ${text}`));
+    return say(c.dim('Sudah ada di BEOT.md.'));
+  } catch (err) {
+    return say(warn(err.message));
+  }
+}
+
 async function handleSessions() {
   const rows = listSessions(state.cwd, 10);
   if (!rows.length) return say(c.dim('Belum ada sesi tersimpan untuk folder ini.'));
@@ -1332,6 +1360,11 @@ async function main() {
   if (state.sessionFile) say(c.dim(`  ↺ lanjut sesi · ${state.history.length} pesan`));
   const projectSkills = loadSkillsFrom(path.join(state.cwd, '.beot', 'skills'));
   if (projectSkills.length) say(c.dim(`  skill proyek: ${projectSkills.length} dari .beot/skills`));
+  const mem = readMemoryFiles(state.cwd);
+  if (mem.length) {
+    const total = mem.reduce((n, m) => n + m.text.split('\n').filter((l) => l.trim()).length, 0);
+    say(c.dim(`  memori: ${mem.map((m) => m.label).join(' + ')} (${total} baris)`));
+  }
   if (migrated) say(c.dim(' ✓ data lama dipindah: ~/.byok-chat → ~/.beot'));
   if (!state.cfg.api_key && !isLocal(state.cfg.base_url)) {
     say(` ${c.dim('API key belum ada — isi lewat /key kapan saja.')}`);
@@ -1380,6 +1413,8 @@ async function main() {
         case '/reload': handleReload(); break;
         case '/compact': await compactHistory(); break;
         case '/sessions': await handleSessions(); break;
+        case '/init': handleInit(arg); break;
+        case '/ingat': handleIngat(arg); break;
         case '/setting': await handleSetting(); break;
         case '/status': handleStatus(); break;
         case '/cost': handleCost(); break;

@@ -24,7 +24,7 @@ Ini intinya: ...
 git clone <repo-ini> beot
 cd beot
 npm install
-npm test     # opsional: 43 cek logika + 2 E2E dengan provider palsu
+npm test     # opsional: 44 cek logika + 3 E2E dengan provider palsu
 npm link     # opsional: bikin perintah `beot` bisa dipanggil dari folder mana saja
 npm start
 ```
@@ -76,6 +76,8 @@ Input tampil sebagai **blok gelap** selebar layar dengan **bar amber `▌` di ki
 | `/key` | pilih provider (Gemini, Groq, OpenRouter, OpenAI, Ollama, custom) lalu isi key dan pilih model |
 | `/model [nama]` | pilih model dari daftar live provider (`GET /models`, non-chat disaring) + katalog, atau ketik manual · `/model base <url>` ganti base_url |
 | `/clear` | hapus riwayat sesi (sesi tersimpan tidak dihapus) |
+| `/init` | buat `BEOT.md` dari ringkasan proyek (tanpa model, 0 token) |
+| `/ingat [--global] <fakta>` | tambah satu baris ke `BEOT.md` proyek (atau global) |
 | `/compact` | ringkas riwayat jadi satu pesan (otomatis saat konteks >85%) |
 | `/sessions` | pilih & lanjutkan sesi tersimpan di folder ini |
 | `/reload` | muat ulang config, persona, skill dari disk |
@@ -173,6 +175,32 @@ Daftar model diambil live dari provider (`GET /models`) dan disaring dari model 
 
 Config tersimpan di `~/.beot/config.json`. Kalau kamu pengguna versi lama (`~/.byok-chat/`), saat pertama jalan isinya **disalin otomatis** ke `~/.beot/` (config + skills); folder lama dibiarkan sebagai arsip.
 
+## Memori — `BEOT.md`
+
+Dua file dibaca **otomatis tiap request** (bukan riwayat chat):
+
+| File | Cakupan |
+|---|---|
+| `<folder-kerja>/BEOT.md` | proyek itu saja |
+| `~/.beot/BEOT.md` | semua proyek |
+
+- `/init` → membuat `BEOT.md` dari ringkasan repo (package.json, perintah tes, jumlah berkas). Tanpa memanggil model, jadi 0 token. Tidak menimpa file yang sudah ada (kecuali `/init --force`).
+- `/ingat <fakta>` → menambah satu baris ke `BEOT.md` proyek. `/ingat --global <fakta>` untuk global.
+- Saat startup muncul `memori: proyek (9 baris)` supaya kelihatan.
+- Batas 8.000 karakter per file; satu baris maks 400 karakter.
+
+Contoh isi:
+
+```md
+# BEOT.md
+- Proyek: toko v1.2 (ESM)
+- Tes: `npm test`
+- Node: >=20
+- Jawab pakai tabel kalau ada angka
+```
+
+**Perlakukan `BEOT.md` proyek seperti kode**: kalau kamu clone repo orang, isinya ikut masuk prompt — review dulu.
+
 ## Tema kustom (skin)
 
 Selain `default`/`mono`/`kontras`, kamu bisa menambah tema sendiri lewat `~/.beot/themes.json`:
@@ -207,7 +235,7 @@ Dengan 14 tool aktif, satu request mengirim ±9.7 ribu karakter ≈ **2.400–2.
 | Schema tool (14) | ±6.400 karakter (~1,7k token) | **65%** |
 | Riwayat | menambah sesuai isi | — |
 
-Cara menghemat: matikan tool yang tidak dipakai (`/setting` → izin shell/web → `Matikan`), pakai `/compact` untuk chat panjang, dan provider yang punya **prompt caching** otomatis akan menagih prefix yang sama lebih murah (system + tool tidak berubah antar-request).
+Cara menghemat: matikan tool yang tidak dipakai (`/setting` → izin shell/web → `Matikan`), pakai `/compact` untuk chat panjang, dan provider yang punya **prompt caching** otomatis akan menagih prefix yang sama lebih murah (system + tool tidak berubah antar-request). `BEOT.md` ikut tiap request (maks 8.000 karakter ≈ 2.000 token) — jaga tetap pendek.
 
 ## Keamanan (baca ini)
 
@@ -233,7 +261,7 @@ Cara menghemat: matikan tool yang tidak dipakai (`/setting` → izin shell/web �
 - Tool loop dibatasi **16 langkah** per pesan; jika habis, muncul peringatan dan konteks tetap disimpan — ketik "lanjutkan".
 - Tool `bash` menjalankan perintah di folder kerja, **selalu lewat izin** (default `ask`), dengan daftar tolak-keras (`rm -rf /`, `format`, `shutdown`, `curl|sh`, dll). Bisa dimatikan lewat `/setting` → `izin shell` → `Matikan`.
 - Agent: `list_dir`/`read_file`/`write_file`/`edit_file` + `grep_file`/`glob_file` + `bash` (izin `y/n`, daftar tolak-keras) + `web_fetch` (URL publik saja) + `todo_write` + `export_pdf`/`export_xlsx`/`export_docx`/`export_rtf` (tulis dengan konfirmasi, hanya di folder kerja/folder izin) + `skill`; belum ada MCP.
-- Tes ada di repo: `npm test` = `selfcheck.js` (43 cek) + `tests/chat-e2e.mjs` (chat + tool + sesi + TUI) + `tests/confirm-e2e.mjs` (default tanya dulu) + `tests/headless-e2e.mjs` (`-p` teks & JSON). Tidak butuh API key. CI menjalankan tes di Windows & Linux (Node 20/22).
+- Tes ada di repo: `npm test` = `selfcheck.js` (44 cek) + `tests/chat-e2e.mjs` (chat + tool + sesi + TUI) + `tests/confirm-e2e.mjs` (default tanya dulu) + `tests/headless-e2e.mjs` (`-p` teks & JSON). Tidak butuh API key. CI menjalankan tes di Windows & Linux (Node 20/22).
 - Error `524`/`502`/`503` berasal dari gateway/provider, bukan dari Beot; app hanya menampilkan status + pesan ramah, bukan halaman HTML mentah. Error yang dikirim **di dalam stream** juga ditampilkan, tidak ditelan.
 - Kalau provider mengembalikan **jawaban kosong** (tanpa teks, thought, atau tool), Beot mengulang sekali lalu menampilkan `⚠ Provider tidak mengirim jawaban (kosong). Coba lagi.`
 - Picker provider hanya untuk endpoint OpenAI-compatible; layanan yang butuh OAuth atau API non-OpenAI (mis. Copilot, Anthropic native) belum didukung — pakai opsi custom kalau endpoint-nya kompatibel.

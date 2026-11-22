@@ -23,6 +23,7 @@ import { buildCompactInput, compactedHistory } from './lib/compact.js';
 import { runShellTool } from './lib/shell.js';
 import { buildWebTool, runWebTool, isPrivateHost, htmlToText } from './lib/web.js';
 import { costOf, priceFor, fmtUsd } from './lib/cost.js';
+import { memoryPrompt, appendMemory, buildInitMemory } from './lib/memory.js';
 import { buildPdf, buildXlsx, buildDocx, buildRtf, runExportTool } from './lib/exporttool.js';
 import { buildDiff, buildNewFileDiff } from './lib/diff.js';
 import { c as themeColors, setTheme, registerThemes, themeNames } from './ui/theme.js';
@@ -1037,6 +1038,27 @@ await acheck('Skill: proyek menimpa user, file rusak dilewati', () => {
     assert.equal(merged.find((s) => s.nama === 'sama').deskripsi, 'versi proyek', 'proyek menang');
     assert.ok(merged.some((s) => s.nama === 'tambahan'));
     assert.deepEqual(loadSkillsFromMany([high, low]).find((s) => s.nama === 'sama').deskripsi, 'versi user', 'urutan menentukan');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+await acheck('Memori: /ingat idempoten, prompt, /init', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'beot-mem-'));
+  try {
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({
+      name: 'demo', type: 'module', scripts: { test: 'node t.js' }, engines: { node: '>=20' },
+    }));
+    const first = appendMemory('tes pakai npm test', { cwd: dir });
+    assert.ok(first.added, 'baris pertama ditambahkan');
+    assert.equal(appendMemory('tes pakai npm test', { cwd: dir }).added, false, 'tidak dobel');
+    const prompt = memoryPrompt(dir);
+    assert.ok(prompt.startsWith('[MEMORI]'), 'prompt memori berawalan penanda');
+    assert.ok(prompt.includes('tes pakai npm test'), 'isi memori masuk prompt');
+    const init = buildInitMemory(dir);
+    assert.ok(init.includes('demo') && init.includes('node t.js'), '/init membaca package.json');
+    assert.throws(() => appendMemory('   ', { cwd: dir }), /kosong/);
+    assert.throws(() => appendMemory('x'.repeat(401), { cwd: dir }), /400/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

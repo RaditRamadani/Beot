@@ -32,7 +32,7 @@ Tidak ada framework UI, tidak ada database, tidak ada HTTP server.
 
 ```
 index.js              REPL, perintah, alur chat
-selfcheck.js          43 cek logika tanpa API key (npm run selftest)
+selfcheck.js          44 cek logika tanpa API key (npm run selftest)
 tests/chat-e2e.mjs    E2E chat + tool + sesi + TUI lewat provider palsu (npm test)
 tests/confirm-e2e.mjs E2E default "tanya dulu": setuju & tolak
 tests/headless-e2e.mjs E2E `-p` (teks & JSON), tanpa TUI
@@ -69,6 +69,7 @@ Semua state pengguna berada di `~/.beot/`:
 | `config.json` | base_url, api_key, model, persona, owner, theme, stream_timeout, write_confirm, external, shell, web, thinking |
 | `skills/` | skill milik pengguna (`.md`) |
 | `themes.json` | tema kustom (opsional): `{ "nama": { "gold": "38;5;214", ... } }` |
+| `BEOT.md` | memori global (dibaca tiap request; `/ingat --global`) |
 | `sessions/` | riwayat per sesi: satu file `.jsonl` per sesi (meta + pesan user/assistant), maks 50 file |
 
 Aturan:
@@ -224,6 +225,8 @@ Saat baris **diawali `/`** dan belum ada spasi (masih token perintah), palette p
 | `/key` | picker provider → isi key → picker model (bagian 4.3 & 7.1) |
 | `/model [nama]` | tanpa argumen: info + picker model; nama: set model; `base <url>`: ganti base_url |
 | `/clear` | kosongkan riwayat, file, dan `ctx` (total sesi tetap); sesi tersimpan tidak dihapus |
+| `/init [--force]` | buat `<folder-kerja>/BEOT.md` dari ringkasan lokal (package.json, skrip, jumlah berkas); menolak menimpa tanpa `--force` |
+| `/ingat [--global] <fakta>` | tambah baris `- <fakta>` ke `BEOT.md` proyek (atau global); idempoten, maks 400 karakter/baris |
 | `/compact` | ringkas riwayat jadi satu pesan `[RINGKASAN PERCAKAPAN SEBELUMNYA]`; otomatis sekali saat konteks ≥85% |
 | `/sessions` | picker sesi tersimpan untuk folder ini; memilih = muat riwayat (maks 40 pesan) |
 | `/reload` | muat ulang `config.json`, persona, dan skill dari disk; laporkan perubahan |
@@ -320,12 +323,13 @@ Digabung dengan satu baris kosong antar-bagian:
 1. Instruksi tetap: jawab teks polos yang enak dibaca di terminal, hindari HTML (tabel markdown boleh — dirender rapi); kode ditulis dalam blok ` ```<bahasa> `; gunakan tool `list_dir`/`read_file`/`write_file`/`export_*` hanya bila perlu; untuk mengubah file WAJIB `write_file` (bukan sekadar menampilkan kode); file biner lewat `export_*`; cari kode/file dengan `grep_file`/`glob_file` sebelum membaca banyak file; isi write_file harus berbeda dari file lama.
 2. Bila mode `plan`: instruksi `MODE PLAN` read-only.
 3. `[FOLDER KERJA: <cwd>]`.
-4. `[FOLDER TAMBAHAN: ...]` bila ada.
-5. `IZIN PATH`: mode `ask` (default) → path di luar folder kerja memunculkan konfirmasi pengguna; mode `trust` → diizinkan otomatis.
-6. `[IDENTITAS]` — `APP`, `MODEL` (dari config), `PEMBUAT` (config `owner`) + aturan: jawab identitas sesuai config, dilarang mengklaim perusahaan lain (Z.ai/OpenAI/Anthropic/NVIDIA), tidak yakin → katakan tidak tahu.
-7. `persona.system_prompt`.
-8. Bila skill aktif: `[SKILL AKTIF: <nama>]\n<isi skill>`.
-9. Bila file aktif: `[FILE YANG DIBACA: <nama>]\n<isi file>`.
+4. `[MEMORI]` bila ada `BEOT.md` (proyek dan/atau global): teks digabung, masing-masing dipotong 8.000 karakter, ditandai `# global` / `# proyek`.
+5. `[FOLDER TAMBAHAN: ...]` bila ada.
+6. `IZIN PATH`: mode `ask` (default) → path di luar folder kerja memunculkan konfirmasi pengguna; mode `trust` → diizinkan otomatis.
+7. `[IDENTITAS]` — `APP`, `MODEL` (dari config), `PEMBUAT` (config `owner`) + aturan: jawab identitas sesuai config, dilarang mengklaim perusahaan lain (Z.ai/OpenAI/Anthropic/NVIDIA), tidak yakin → katakan tidak tahu.
+8. `persona.system_prompt`.
+9. Bila skill aktif: `[SKILL AKTIF: <nama>]\n<isi skill>`.
+10. Bila file aktif: `[FILE YANG DIBACA: <nama>]\n<isi file>`.
 
 Tidak ada pemotongan riwayat manual oleh user; riwayat dipangkas otomatis bila perkiraan konteks melebihi **70% context window** (pesan tertua dibuang, dicatat `⟳ riwayat dipangkas: N pesan`) dan pengguna tetap bisa `/clear`.
 
@@ -593,10 +597,11 @@ Cek yang wajib lolos:
 40. Tema kustom: `registerThemes` menerima palet sah, menolak nama bawaan, kunci asing, dan kode berisi escape; tema kustom bisa diaktifkan lewat `setTheme`.
 41. Skill bertingkat: `loadSkillsFromMany` menggabungkan beberapa folder, nama sama → folder belakangan menang, file tanpa frontmatter dilewati.
 42. Headless: `-p` mengembalikan hanya jawaban (tanpa ANSI/banner), `--output-format json` valid dengan `text/model/tokens/toolCalls`, prompt kosong → exit 2.
+43. Memori: `appendMemory` idempoten, menolak teks kosong/>400 karakter; `memoryPrompt` memuat penanda `[MEMORI]`; `buildInitMemory` membaca `package.json` (nama + skrip tes).
 
 ## 17. Kriteria penerimaan v0.1
 
-1. `npm test` → 43 cek `ok` + 2 E2E hijau, exit code 0.
+1. `npm test` → 44 cek `ok` + 3 E2E hijau, exit code 0.
 2. Di mesin tanpa `~/.beot/config.json`, `node index.js` menampilkan banner 3 baris (wordmark + garis ganda + hint) dan composer tanpa meminta API key dan tanpa panggilan jaringan. Mengetik pesan chat hanya memberi peringatan; `/key` membuka picker provider.
 3. `/bantu` menampilkan seluruh perintah.
 4. Mengetik `/` mengganti composer dengan palette selebar layar (baris terpilih amber penuh); `↑`/`↓` memindahkan pilihan, `Tab` mengisi perintah + spasi, `Enter` menjalankan perintah terpilih. Setelah palette tertutup, composer kembali sebagai blok gelap dengan bar amber dan status satu baris (`persona  folder  model` kiri, `ctx …` kanan).
@@ -618,3 +623,4 @@ Cek yang wajib lolos:
 20. Sesi: mengirim pesan membuat `.jsonl` di `~/.beot/sessions`; `--continue` memuat sesi terakhir; `/compact` mengganti riwayat dengan satu pesan ringkasan; `/sessions` memuat sesi pilihan.
 21. `/cost` menampilkan tarif model, biaya request terakhir, dan total sesi; model tanpa harga hanya menampilkan token. `web_fetch` menolak `127.0.0.1` dan `file://`, dan default `ask` sebelum mengunduh.
 22. `beot -p "..."` mencetak jawaban saja (tanpa banner/ANSI) dan keluar; `--output-format json` menghasilkan JSON valid; tulis/shell/web ditolak di mode headless.
+23. `/init` membuat `BEOT.md` (tidak menimpa tanpa `--force`); `/ingat` menambah baris idempoten; startup menampilkan `memori: …`; isi memori muncul di system prompt (`[MEMORI]`).
