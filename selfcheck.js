@@ -440,9 +440,9 @@ try {
   assert.ok(plain().includes('build · gemini-2.0-flash'), 'palette: status tetap tampil');
   assert.ok(plain().split('\n').some((ln) => ln.includes('build') && ln.includes('ctx 0')), 'palette: status satu baris');
   assert.ok(plain().includes('tab lengkapi') && plain().includes('/persona'), 'palette / tampil');
-  const selected = chunks.join('').split('\r\n').find((ln) => ln.includes('48;5;179'));
+  const selected = chunks.join('').split('\r\n').find((ln) => ln.includes('48;5;33'));
   const selectedPlain = (selected || '').replace(/\x1b\[[0-9;]*[A-Za-z]/g, '');
-  assert.equal(visualWidth(selectedPlain), 79, 'baris terpilih amber selebar layar');
+  assert.equal(visualWidth(selectedPlain), 79, 'baris terpilih biru selebar layar');
   await press('down');
   await press('return', '\r');
   assert.equal(await p, '/skill', 'panah + Enter menjalankan pilihan');
@@ -661,7 +661,7 @@ try {
   assert.ok(plain().includes('LATAR CHAT'), 'popup: latar chat tampil');
   assert.ok(plain().includes('saring'), 'popup: kolom saring tampil');
   assert.ok(!plain().includes('┌'), 'popup: tanpa bingkai (gaya OpenCode)');
-  assert.ok(chunks.join('').includes('48;5;179'), 'popup: baris terpilih amber penuh');
+  assert.ok(chunks.join('').includes('48;5;33'), 'popup: baris terpilih biru penuh');
   assert.ok(plain().includes('Pilih provider'), 'popup: judul tampil');
   await press('return', '\r');
   assert.equal(await p, 'groq', 'popup: panah + Enter');

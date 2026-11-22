@@ -7,12 +7,12 @@ export const RESET = `${ESC}0m`;
 const PALETTES = {
   // Satu aksen (amber) + status; sisanya netral. Warna = informasi, bukan hiasan.
   default: {
-    lav: '38;5;180', peach: '38;5;215', mint: '38;5;114', gold: '38;5;220', maroon: '38;5;131',
-    amber: '38;5;214', amberHi: '38;5;227',
-    dim: '2', bold: '1', selected: '48;5;179;30', userBlock: '48;5;236', popupBg: '48;5;235',
-    composerBar: '38;5;220;48;5;236', codeBar: '38;5;114',
+    lav: '38;5;110', peach: '38;5;111', mint: '38;5;114', gold: '38;5;39', maroon: '38;5;131',
+    amber: '38;5;33', amberHi: '38;5;75',
+    dim: '2', bold: '1', selected: '48;5;33;97', userBlock: '48;5;236', popupBg: '48;5;235',
+    composerBar: '38;5;39;48;5;236', codeBar: '38;5;114',
     kw: '38;5;204', str: '38;5;214', num: '38;5;179', cmt: '38;5;245', fn: '38;5;117', type: '38;5;110',
-    orange: '38;5;220',
+    orange: '38;5;39',
   },
   mono: {
     lav: '38;5;253', peach: '38;5;250', mint: '38;5;252', gold: '38;5;255', maroon: '38;5;245',
@@ -23,12 +23,12 @@ const PALETTES = {
     orange: '38;5;250',
   },
   kontras: {
-    lav: '38;5;45', peach: '38;5;214', mint: '38;5;46', gold: '38;5;226', maroon: '38;5;196',
-    amber: '38;5;214', amberHi: '38;5;231',
-    dim: '2', bold: '1', selected: '48;5;226;30', userBlock: '48;5;235', popupBg: '48;5;234',
-    composerBar: '38;5;226;48;5;235', codeBar: '38;5;46',
+    lav: '38;5;51', peach: '38;5;45', mint: '38;5;46', gold: '38;5;45', maroon: '38;5;196',
+    amber: '38;5;33', amberHi: '38;5;51',
+    dim: '2', bold: '1', selected: '48;5;33;97', userBlock: '48;5;235', popupBg: '48;5;234',
+    composerBar: '38;5;45;48;5;235', codeBar: '38;5;46',
     kw: '38;5;201', str: '38;5;226', num: '38;5;208', cmt: '38;5;244', fn: '38;5;51', type: '38;5;39',
-    orange: '38;5;214',
+    orange: '38;5;45',
   },
 };
 
