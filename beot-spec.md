@@ -38,6 +38,7 @@ tests/confirm-e2e.mjs E2E default "tanya dulu": setuju & tolak
 tests/headless-e2e.mjs E2E `-p` (teks & JSON), tanpa TUI
 tests/menu-e2e.mjs    E2E semua perintah + popup (menu lengkap)
 tests/trust-e2e.mjs   E2E skill/BEOT.md repo butuh izin (default tanya)
+tests/cli-e2e.mjs     E2E semua flag CLI, tool baca di -p, mode pipe, & jalur error perintah
 lib/shell.js          tool bash: izin, tolak-keras, timeout
 lib/web.js            web_fetch: HTTP publik, HTML→teks, blokir host privat
 lib/cost.js           perkiraan harga token per model
@@ -175,7 +176,7 @@ Tidak ada panggilan jaringan saat startup.
 
 - Argumen CLI: `beot [folder]`, `--continue` (lanjut sesi terakhir di folder itu), `--resume` (picker sesi), `-p/--print "<prompt>"` (headless), `--output-format json`, `--version`, `--help`. `--help`/`--version` dicetak **sebelum** TUI masuk alternate screen dan memakai teks polos.
 - Mode `--help`/`--version` tidak pernah menyentuh config, jaringan, atau clipboard.
-- Headless: `state.headless = true` → banner/ANSI mati, sesi tidak dibuat, dan semua konfirmasi (tulis/shell/web) otomatis **ditolak** sehingga hanya tool baca yang berjalan. Output: teks jawaban atau JSON `{text, model, tokens, toolCalls, error}`. Exit code `0/1/2`.
+- Headless: `state.headless = true` → banner/ANSI mati, sesi tidak dibuat, dan semua konfirmasi (tulis/shell/web) otomatis **ditolak** sehingga hanya tool baca yang berjalan. Output: teks jawaban atau JSON `{text, model, tokens, toolCalls, error}`. Flag CLI yang tidak dikenal atau `--output-format` selain `text`/`json` ditolak di stderr dengan exit code `2`. Exit code `0/1/2`.
 - Prompt input mode pipe: `Kamu > `. Di TTY, composer tidak menampilkan label prompt (hanya `›` + kursor). Di transkrip TTY, pesan user tampil sebagai blok latar gelap selebar layar (tanpa bar kiri); jawaban bot diawali header `◆ Beot`.
 - Input dibaca per baris, di-`trim`. Baris kosong diabaikan (tidak menambah riwayat).
 - EOF (Ctrl+D pada baris kosong) mengakhiri program dengan rapi. `Ctrl+C` saat ada seleksi = menyalin seleksi (tidak keluar); tanpa seleksi, tekan **2×** dalam 1,5 detik untuk mencetak `Keluar.` lalu keluar dengan exit code 0.
@@ -560,7 +561,7 @@ Aturan:
 
 ## 16. Self-test
 
-`npm run selftest` menjalankan `selfcheck.js` tanpa API key dan tanpa jaringan. `npm test` menjalankan selfcheck **plus** `tests/chat-e2e.mjs`, `tests/confirm-e2e.mjs`, `tests/headless-e2e.mjs`, dan `tests/menu-e2e.mjs` (provider palsu + TUI disimulasikan lewat `tests/tui-run.cjs`). Exit code `1` bila ada yang gagal. CI (`.github/workflows/test.yml`) menjalankan `npm ci && npm test` di Ubuntu & Windows, Node 20 & 22.
+`npm run selftest` menjalankan `selfcheck.js` tanpa API key dan tanpa jaringan. `npm test` menjalankan selfcheck **plus** `tests/chat-e2e.mjs`, `tests/confirm-e2e.mjs`, `tests/headless-e2e.mjs`, `tests/menu-e2e.mjs`, `tests/trust-e2e.mjs`, dan `tests/cli-e2e.mjs` (provider palsu + TUI disimulasikan lewat `tests/tui-run.cjs`). Exit code `1` bila ada yang gagal. CI (`.github/workflows/test.yml`) menjalankan `npm ci && npm test` di Ubuntu & Windows, Node 20 & 22.
 
 Cek yang wajib lolos:
 
@@ -616,7 +617,7 @@ Cek yang wajib lolos:
 
 ## 17. Kriteria penerimaan v0.1
 
-1. `npm test` → 47 cek `ok` + 5 E2E hijau, exit code 0.
+1. `npm test` → 47 cek `ok` + 6 E2E hijau, exit code 0.
 2. Di mesin tanpa `~/.beot/config.json`, `node index.js` menampilkan banner 3 baris (wordmark + garis ganda + hint) dan composer tanpa meminta API key dan tanpa panggilan jaringan. Mengetik pesan chat hanya memberi peringatan; `/key` membuka picker provider.
 3. `/bantu` menampilkan seluruh perintah.
 4. Mengetik `/` mengganti composer dengan palette selebar layar (baris terpilih biru penuh); `↑`/`↓` memindahkan pilihan, `Tab` mengisi perintah + spasi, `Enter` menjalankan perintah terpilih. Setelah palette tertutup, composer kembali sebagai blok gelap dengan prompt biru dan status satu baris (`persona  folder  model` kiri, `ctx …` kanan).

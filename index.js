@@ -1267,7 +1267,7 @@ async function handleSessions() {
 }
 
 function parseArgs(argv) {
-  const out = { dir: null, cont: false, resume: false, help: false, version: false, prompt: null, format: 'text' };
+  const out = { dir: null, cont: false, resume: false, help: false, version: false, prompt: null, format: 'text', unknown: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--help' || a === '-h') out.help = true;
@@ -1275,9 +1275,10 @@ function parseArgs(argv) {
     else if (a === '--continue') out.cont = true;
     else if (a === '--resume') out.resume = true;
     else if (a === '-p' || a === '--print') out.prompt = argv[++i] ?? '';
-    else if (a === '--output-format') out.format = argv[++i] || 'text';
+    else if (a === '--output-format') out.format = argv[++i] || '';
     else if (a.startsWith('--output-format=')) out.format = a.slice(16);
-    else if (!a.startsWith('-') && !out.dir) out.dir = a;
+    else if (a.startsWith('-')) out.unknown.push(a);
+    else if (!out.dir) out.dir = a;
   }
   return out;
 }
@@ -1330,6 +1331,16 @@ function printUsage() {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+  if (args.unknown.length) {
+    process.stderr.write(`beot: flag tidak dikenal: ${args.unknown.join(', ')}. Lihat beot --help.\n`);
+    process.exitCode = 2;
+    return;
+  }
+  if (!['text', 'json'].includes(args.format)) {
+    process.stderr.write('beot: --output-format harus "text" atau "json".\n');
+    process.exitCode = 2;
+    return;
+  }
   if (args.version) {
     process.stdout.write('beot 0.1.0\n');
     return;
