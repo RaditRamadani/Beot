@@ -562,7 +562,7 @@ try {
   assert.ok(plain().includes('baris dua') && plain().includes('baris tiga'), 'tempel multi-baris tampil di composer');
   await press('return', '\r');
   assert.equal(await p, 'baris satu\nbaris dua\nbaris tiga', 'tempel multi-baris dikirim utuh');
-  assert.ok(plain().includes('  baris dua'), 'semua baris pesan tampil di transkrip');
+  assert.ok(plain().includes('▎ baris dua'), 'semua baris pesan tampil di transkrip');
 
   chunks.length = 0;
   clearLog();
