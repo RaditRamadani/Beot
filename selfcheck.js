@@ -21,7 +21,7 @@ import { normalizeTodos, runTodoTool } from './lib/todo.js';
 import { appendTurn, readSession } from './lib/session.js';
 import { buildCompactInput, compactedHistory } from './lib/compact.js';
 import { runShellTool } from './lib/shell.js';
-import { buildWebTool, runWebTool, isPrivateHost, htmlToText } from './lib/web.js';
+import { buildWebTool, runWebTool, isPrivateHost, isPrivateIp, resolveSafe, htmlToText } from './lib/web.js';
 import { costOf, priceFor, fmtUsd } from './lib/cost.js';
 import { memoryPrompt, appendMemory, buildInitMemory } from './lib/memory.js';
 import { buildPdf, buildXlsx, buildDocx, buildRtf, runExportTool } from './lib/exporttool.js';
@@ -943,6 +943,17 @@ await acheck('Shell: izin, tolak-keras, output, timeout', async () => {
     cwd: process.cwd(), shellMode: 'allow',
   });
   assert.ok(to.error && /timeout/i.test(to.error), 'timeout menghentikan perintah');
+
+  process.env.BEOT_TEST_SECRET = 'rahasia-env';
+  try {
+    const envCmd = `${node} -e "console.log(process.env.BEOT_TEST_SECRET||'kosong')"`;
+    const cleaned = await runShellTool({ command: envCmd }, { cwd: process.cwd(), shellMode: 'allow' });
+    assert.ok(cleaned.content.includes('kosong') && !cleaned.content.includes('rahasia-env'), 'env kredensial dibuang');
+    const full = await runShellTool({ command: envCmd }, { cwd: process.cwd(), shellMode: 'allow', shellEnv: 'full' });
+    assert.ok(full.content.includes('rahasia-env'), 'shellEnv full meneruskan env');
+  } finally {
+    delete process.env.BEOT_TEST_SECRET;
+  }
 });
 
 await acheck('Todo: validasi & ringkasan', () => {
@@ -1027,6 +1038,12 @@ await acheck('Web: host privat & HTML jadi teks', async () => {
   assert.ok(privateErr && /privat/i.test(privateErr.message), 'localhost diblokir');
   const schemeErr = await runWebTool({ url: 'file:///etc/passwd' }, { webMode: 'allow' }).then(() => null, (e) => e);
   assert.ok(schemeErr && /http/i.test(schemeErr.message), 'skema non-http ditolak');
+  assert.equal(isPrivateIp('::ffff:7f00:1'), true, 'mapped IPv6 privat');
+  assert.equal(isPrivateIp('8.8.8.8'), false, 'IP publik lolos');
+  const evil = await resolveSafe('evil.test', async () => [{ address: '127.0.0.1', family: 4 }]).then(() => null, (e) => e);
+  assert.ok(evil && /privat/i.test(evil.message), 'DNS yang mengarah privat ditolak');
+  const good = await resolveSafe('example.com', async () => [{ address: '93.184.216.34', family: 4 }]);
+  assert.equal(good.address, '93.184.216.34', 'DNS publik dipakai untuk pinning');
   const txt = htmlToText('<html><script>alert(1)</script><h1>Judul</h1><p>Halo &amp; dunia</p></html>');
   assert.ok(txt.includes('Judul') && txt.includes('Halo & dunia'), 'tag & entity dirapikan');
   assert.ok(!txt.includes('alert'), 'script dibuang');
