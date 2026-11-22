@@ -3,12 +3,25 @@
 Chat AI di terminal — karakter bebas (mode `build` & `plan`), bisa membaca file lokal sebagai konteks, kunci API milikmu sendiri, nol server. Untuk developer, tim kerja, dan siapa saja yang hidup di terminal.
 
 ```
- █▀▀▄ █▀▀▀ █▀▀█ ▀▀█▀▀
- █▀▀▄ █▀▀  █  █   █                        build · gemini-2.0-flash
- ▀▀▀  ▀▀▀▀ ▀▀▀▀   ▀                        v0.1
- ──────────────────────────────────────────────────────────────────
- ketik / untuk menu
+                                  ██████  ██████  ██████  ██████
+                                  ██  ██  ██      ██  ██    ██
+                                  ██████  █████   ██  ██    ██
+                                  ██  ██  ██      ██  ██    ██
+                                  ██████  ██████  ██████    ██
 
+                          v0.1 · chat AI di terminal · BYOK · nol server
+
+           ▌
+           ▌  Ketik pesan… (/ untuk menu · F2 gambar)
+           ▌
+            build  proyek  gemini-2.0-flash      ctx ░░░░░ 0%  0 tok  / menu
+
+                             shift+tab persona    / menu    F2 gambar
+```
+
+Setelah kamu mulai mengetik, splash hilang dan tampilan jadi percakapan:
+
+```
 ▎ rangkum bab ini, ada typo?
 
 ◆ Beot

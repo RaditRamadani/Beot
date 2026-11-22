@@ -80,8 +80,8 @@ async function step(line, expect, { esc = false } = {}) {
   }
 }
 
-await waitFor('█▀▀▄', 0, 10_000);
-ok(out.join('').includes('█▀▀▄'), 'logo tampil saat startup');
+await waitFor('██████', 0, 10_000);
+ok(out.join('').includes('██████'), 'splash logo tampil saat startup');
 
 await step('/bantu', 'Perintah');
 await step('/status', 'Status sesi');

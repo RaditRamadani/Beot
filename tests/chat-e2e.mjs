@@ -102,7 +102,7 @@ ok(plain.includes('tulis laporan.md'), 'baris buku besar tool tampil');
 ok(plain.includes('jalan '), 'bash dijalankan dan dicatat');
 ok(plain.includes('tugas 1/2') || plain.includes('tugas 2/2'), 'panel todo tampil');
 ok(plain.includes('│ Produk │') && plain.includes('│ Sepatu │'), 'tabel markdown dirender');
-ok(plain.includes('█▀▀▄'), 'logo menetap di header setelah chat');
+ok(raw.includes('██████'), 'splash logo tampil saat start');
 ok(plain.includes('BAHAYA'), 'teks model tetap tampil');
 ok(!raw.includes('\x1b[31mMERAH'), 'escape ANSI dari model dibuang');
 ok(!/Error|TypeError|Unhandled/.test(plain), 'tidak ada stack trace di layar');

@@ -27,7 +27,7 @@ import { memoryPrompt, appendMemory, buildInitMemory } from './lib/memory.js';
 import { buildPdf, buildXlsx, buildDocx, buildRtf, runExportTool } from './lib/exporttool.js';
 import { buildDiff, buildNewFileDiff } from './lib/diff.js';
 import { banner, c as themeColors, setTheme, registerThemes, themeNames } from './ui/theme.js';
-import { logoRows, LOGO_WIDTH } from './ui/logo.js';
+import { logoRows, LOGO_WIDTH, splashRows, SPLASH_WIDTH } from './ui/logo.js';
 
 process.env.BEOT_NO_CLIPBOARD = '1'; // jangan sentuh clipboard OS saat selftest
 
@@ -293,13 +293,15 @@ check('Highlight: keyword, string, angka, komentar, fungsi', () => {
   assert.equal(visualWidth(out), visualWidth('const x = "hi"; // note\nlet n = 42;'), 'lebar tidak berubah');
 });
 
-check('Logo: 3 baris rata, fallback saat sempit', () => {
+check('Logo: splash 5 baris + banner fallback', () => {
   const rows = logoRows();
-  assert.equal(rows.length, 3, 'tiga baris');
+  assert.equal(rows.length, 3, 'logo kecil tiga baris');
   for (const row of rows) assert.equal(row.length, LOGO_WIDTH, 'lebar seragam');
+  const big = splashRows();
+  assert.equal(big.length, 5, 'splash lima baris');
+  for (const row of big) assert.equal(row.length, SPLASH_WIDTH, 'lebar splash seragam');
   const wide = banner({ persona: 'build', model: 'm', width: 80 });
-  assert.ok(wide.includes('█▀▀▄'), 'logo muncul di terminal lebar');
-  assert.equal(wide.split('\n').length, 5, 'logo + garis + hint');
+  assert.ok(wide.includes('█▀▀▄'), 'banner lebar memuat logo kecil');
   const narrow = banner({ persona: 'build', model: 'm', width: 40 });
   assert.ok(!narrow.includes('█▀▀▄'), 'tanpa logo di terminal sempit');
   assert.equal(narrow.split('\n').length, 3, 'fallback tiga baris');

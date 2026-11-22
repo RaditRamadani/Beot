@@ -10,7 +10,7 @@ import { buildFileTools, runFileTool, buildSearchTools } from './lib/filetools.j
 import { buildExportTools, runExportTool, EXPORT_NAMES } from './lib/exporttool.js';
 import { readDoc } from './lib/readfile.js';
 import { buildDiff, buildNewFileDiff } from './lib/diff.js';
-import { ask, log as tuiLog, append as tuiAppend, clearLog, init as tuiInit, setStatus, setHeader, shutdown, startLoading, stopLoading, beginInterrupt, endInterrupt, setTitle, bell, takeAttachment, diffBlock, markLog, rollbackLog, toolProgress, confirmInline, stripEsc, visualWidth, setFileSuggest, takeAtFiles, thoughtBlock, ledgerLine, setTodos } from './lib/tui.js';
+import { ask, log as tuiLog, append as tuiAppend, clearLog, init as tuiInit, setStatus, setSplashNote, shutdown, startLoading, stopLoading, beginInterrupt, endInterrupt, setTitle, bell, takeAttachment, diffBlock, markLog, rollbackLog, toolProgress, confirmInline, stripEsc, visualWidth, setFileSuggest, takeAtFiles, thoughtBlock, ledgerLine, setTodos } from './lib/tui.js';
 import { COMMANDS } from './lib/commands.js';
 import { buildTodoTool, runTodoTool } from './lib/todo.js';
 import { initSession, appendTurn, listSessions, readSession, latestSession, pruneSessions } from './lib/session.js';
@@ -22,7 +22,6 @@ import { memoryPrompt, readMemoryFiles, appendMemory, buildInitMemory, projectMe
 import { PROVIDERS, findProvider, fetchModels, mergeModels } from './lib/providers.js';
 import { userContent, contentChars } from './lib/attach.js';
 import { banner, c, hr, userPrompt, botPrefix, ok, warn, setTheme, themeName, themeNames, registerThemes, setPlain } from './ui/theme.js';
-import { logoRows, LOGO_WIDTH } from './ui/logo.js';
 
 const CONTEXT_WINDOW = 128000; // perkiraan; sesuaikan bila window model diketahui
 
@@ -106,31 +105,16 @@ function systemPrompt() {
   return parts.join('\n\n');
 }
 
-const LOGO_HEADER_MIN = 44;
+const SPLASH_MIN = 44;
 
-// Header menetap: logo 3 baris + meta, dipanggil tiap frame oleh TUI.
-function headerLines(width) {
-  if (width < LOGO_HEADER_MIN) return [];
-  const rows = logoRows();
-  const meta = `${state.persona?.nama || '-'} · ${stripEsc(state.cfg.model)}`;
-  const room = Math.max(8, width - LOGO_WIDTH - 2);
-  const m = meta.length > room ? `${meta.slice(0, Math.max(1, room - 1))}…` : meta;
-  const pad = ' '.repeat(Math.max(2, width - LOGO_WIDTH - 1 - m.length));
-  return [
-    ` ${c.gold(rows[0])}`,
-    ` ${c.gold(rows[1])}${pad}${c.dim(m)}`,
-    ` ${c.gold(rows[2])}`,
-    c.dim('─'.repeat(width)),
-  ];
+// Splash layar penuh hanya di TTY yang cukup lebar.
+function splashActive() {
+  return process.stdin.isTTY && process.stdout.isTTY
+    && Math.max(30, (process.stdout.columns || 80) - 1) >= SPLASH_MIN;
 }
 
 function renderBanner() {
   const w = Math.max(30, (process.stdout.columns || 80) - 1);
-  // Di TTY lebar, logo sudah menetap di header: jangan cetak ulang di transkrip.
-  if (process.stdin.isTTY && process.stdout.isTTY && w >= LOGO_HEADER_MIN) {
-    say(` ${c.dim('ketik')} ${c.gold('/')} ${c.dim('untuk menu')}`);
-    return;
-  }
   say(banner({
     persona: state.persona?.nama || '-',
     model: stripEsc(state.cfg.model),
@@ -1393,31 +1377,35 @@ async function main() {
     }
   }
 
-  const stickyBanner = process.stdin.isTTY && process.stdout.isTTY
-    && Math.max(30, (process.stdout.columns || 80) - 1) >= LOGO_HEADER_MIN;
-  if (!stickyBanner) say('');
-  renderBanner();
-  if (state.sessionFile) say(c.dim(`  ↺ lanjut sesi · ${state.history.length} pesan`));
+  const notes = [];
+  if (state.sessionFile) notes.push(`↺ lanjut sesi · ${state.history.length} pesan`);
   const projectSkillDir = path.join(state.cwd, '.beot', 'skills');
   const sameDir = (a, b) => (process.platform === 'win32'
     ? path.resolve(a).toLowerCase() === path.resolve(b).toLowerCase()
     : path.resolve(a) === path.resolve(b));
   // Saat cwd = folder home, folder skill "proyek" sama dengan folder skill user: jangan dihitung dua kali.
   const projectSkills = sameDir(projectSkillDir, SKILLS_DIR) ? [] : loadSkillsFrom(projectSkillDir);
-  if (projectSkills.length) say(c.dim(`  skill proyek: ${projectSkills.length} dari .beot/skills`));
+  if (projectSkills.length) notes.push(`skill proyek: ${projectSkills.length} dari .beot/skills`);
   const mem = readMemoryFiles(state.cwd);
   if (mem.length) {
     const total = mem.reduce((n, m) => n + m.text.split('\n').filter((l) => l.trim()).length, 0);
-    say(c.dim(`  memori: ${mem.map((m) => m.label).join(' + ')} (${total} baris)`));
+    notes.push(`memori: ${mem.map((m) => m.label).join(' + ')} (${total} baris)`);
   }
-  if (migrated) say(c.dim(' ✓ data lama dipindah: ~/.byok-chat → ~/.beot'));
+  if (migrated) notes.push('✓ data lama dipindah: ~/.byok-chat → ~/.beot');
   if (!state.cfg.api_key && !isLocal(state.cfg.base_url)) {
-    say(` ${c.dim('API key belum ada — isi lewat /key kapan saja.')}`);
+    notes.push('API key belum ada — isi lewat /key kapan saja.');
   }
-  say('');
+
+  if (splashActive()) {
+    setSplashNote(notes.join('\n'));
+  } else {
+    say('');
+    renderBanner();
+    for (const n of notes) say(c.dim(`  ${n}`));
+    say('');
+  }
 
   setStatus(composerStatus);
-  setHeader(headerLines);
   if (state.headless) {
     await runHeadless(args.prompt, args.format);
     return;
