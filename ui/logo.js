@@ -15,18 +15,3 @@ export function logoRows() {
   const chars = ['B', 'E', 'O', 'T'];
   return [0, 1, 2].map((row) => chars.map((ch) => LETTERS[ch][row]).join(' '));
 }
-
-// Versi besar untuk layar splash (5 baris, 30 kolom).
-const BIG = {
-  B: ['██████', '██  ██', '██████', '██  ██', '██████'],
-  E: ['██████', '██    ', '█████ ', '██    ', '██████'],
-  O: ['██████', '██  ██', '██  ██', '██  ██', '██████'],
-  T: ['██████', '  ██  ', '  ██  ', '  ██  ', '  ██  '],
-};
-
-export const SPLASH_WIDTH = 30;
-
-export function splashRows() {
-  const chars = ['B', 'E', 'O', 'T'];
-  return [0, 1, 2, 3, 4].map((row) => chars.map((ch) => BIG[ch][row]).join('  '));
-}

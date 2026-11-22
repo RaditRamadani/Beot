@@ -3,11 +3,9 @@
 Chat AI di terminal — karakter bebas (mode `build` & `plan`), bisa membaca file lokal sebagai konteks, kunci API milikmu sendiri, nol server. Untuk developer, tim kerja, dan siapa saja yang hidup di terminal.
 
 ```
-                                  ██████  ██████  ██████  ██████
-                                  ██  ██  ██      ██  ██    ██
-                                  ██████  █████   ██  ██    ██
-                                  ██  ██  ██      ██  ██    ██
-                                  ██████  ██████  ██████    ██
+                                  █▀▀▄ █▀▀▀ █▀▀█ ▀▀█▀▀
+                                  █▀▀▄ █▀▀  █  █   █
+                                  ▀▀▀  ▀▀▀▀ ▀▀▀▀   ▀
 
                           v0.1 · chat AI di terminal · BYOK · nol server
 
