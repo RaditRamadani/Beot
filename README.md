@@ -306,3 +306,5 @@ npm run selftest
 ## Lisensi
 
 MIT
+#   B e o t  
+ 
