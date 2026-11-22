@@ -36,6 +36,7 @@ selfcheck.js          44 cek logika tanpa API key (npm run selftest)
 tests/chat-e2e.mjs    E2E chat + tool + sesi + TUI lewat provider palsu (npm test)
 tests/confirm-e2e.mjs E2E default "tanya dulu": setuju & tolak
 tests/headless-e2e.mjs E2E `-p` (teks & JSON), tanpa TUI
+tests/menu-e2e.mjs    E2E semua perintah + popup (menu lengkap)
 lib/shell.js          tool bash: izin, tolak-keras, timeout
 lib/web.js            web_fetch: HTTP publik, HTML→teks, blokir host privat
 lib/cost.js           perkiraan harga token per model
@@ -551,7 +552,7 @@ Aturan:
 
 ## 16. Self-test
 
-`npm run selftest` menjalankan `selfcheck.js` tanpa API key dan tanpa jaringan. `npm test` menjalankan selfcheck **plus** `tests/chat-e2e.mjs`, `tests/confirm-e2e.mjs`, dan `tests/headless-e2e.mjs` (provider palsu + TUI disimulasikan lewat `tests/tui-run.cjs`). Exit code `1` bila ada yang gagal. CI (`.github/workflows/test.yml`) menjalankan `npm ci && npm test` di Ubuntu & Windows, Node 20 & 22.
+`npm run selftest` menjalankan `selfcheck.js` tanpa API key dan tanpa jaringan. `npm test` menjalankan selfcheck **plus** `tests/chat-e2e.mjs`, `tests/confirm-e2e.mjs`, `tests/headless-e2e.mjs`, dan `tests/menu-e2e.mjs` (provider palsu + TUI disimulasikan lewat `tests/tui-run.cjs`). Exit code `1` bila ada yang gagal. CI (`.github/workflows/test.yml`) menjalankan `npm ci && npm test` di Ubuntu & Windows, Node 20 & 22.
 
 Cek yang wajib lolos:
 

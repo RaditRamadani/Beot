@@ -24,7 +24,7 @@ Ini intinya: ...
 git clone <repo-ini> beot
 cd beot
 npm install
-npm test     # opsional: 44 cek logika + 3 E2E dengan provider palsu
+npm test     # opsional: 44 cek logika + 4 E2E dengan provider palsu
 npm link     # opsional: bikin perintah `beot` bisa dipanggil dari folder mana saja
 npm start
 ```
@@ -261,7 +261,7 @@ Cara menghemat: matikan tool yang tidak dipakai (`/setting` → izin shell/web �
 - Tool loop dibatasi **16 langkah** per pesan; jika habis, muncul peringatan dan konteks tetap disimpan — ketik "lanjutkan".
 - Tool `bash` menjalankan perintah di folder kerja, **selalu lewat izin** (default `ask`), dengan daftar tolak-keras (`rm -rf /`, `format`, `shutdown`, `curl|sh`, dll). Bisa dimatikan lewat `/setting` → `izin shell` → `Matikan`.
 - Agent: `list_dir`/`read_file`/`write_file`/`edit_file` + `grep_file`/`glob_file` + `bash` (izin `y/n`, daftar tolak-keras) + `web_fetch` (URL publik saja) + `todo_write` + `export_pdf`/`export_xlsx`/`export_docx`/`export_rtf` (tulis dengan konfirmasi, hanya di folder kerja/folder izin) + `skill`; belum ada MCP.
-- Tes ada di repo: `npm test` = `selfcheck.js` (44 cek) + `tests/chat-e2e.mjs` (chat + tool + sesi + TUI) + `tests/confirm-e2e.mjs` (default tanya dulu) + `tests/headless-e2e.mjs` (`-p` teks & JSON). Tidak butuh API key. CI menjalankan tes di Windows & Linux (Node 20/22).
+- Tes ada di repo: `npm test` = `selfcheck.js` (44 cek) + 4 E2E: chat+tools, konfirmasi tulis, headless `-p`, dan **semua perintah/popup menu**. Tidak butuh API key. CI menjalankan tes di Windows & Linux (Node 20/22).
 - Error `524`/`502`/`503` berasal dari gateway/provider, bukan dari Beot; app hanya menampilkan status + pesan ramah, bukan halaman HTML mentah. Error yang dikirim **di dalam stream** juga ditampilkan, tidak ditelan.
 - Kalau provider mengembalikan **jawaban kosong** (tanpa teks, thought, atau tool), Beot mengulang sekali lalu menampilkan `⚠ Provider tidak mengirim jawaban (kosong). Coba lagi.`
 - Picker provider hanya untuk endpoint OpenAI-compatible; layanan yang butuh OAuth atau API non-OpenAI (mis. Copilot, Anthropic native) belum didukung — pakai opsi custom kalau endpoint-nya kompatibel.

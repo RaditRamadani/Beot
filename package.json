@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node index.js",
     "selftest": "node selfcheck.js",
-    "test": "node selfcheck.js && node tests/chat-e2e.mjs && node tests/confirm-e2e.mjs && node tests/headless-e2e.mjs"
+    "test": "node selfcheck.js && node tests/chat-e2e.mjs && node tests/confirm-e2e.mjs && node tests/headless-e2e.mjs && node tests/menu-e2e.mjs"
   },
   "engines": {
     "node": ">=20"
