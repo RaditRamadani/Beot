@@ -13,7 +13,7 @@ Rilis pertama.
 - UI splash + panel popup, tabel rapi, tema bawaan + kustom, `/status`, `/cost`.
 - Headless `-p` (teks/JSON), mode pipe bersih tanpa ANSI.
 - Keamanan: sandbox realpath, blokir kredensial, SSRF + DNS pinning, env shell bersih, izin memori repo.
-- 48 cek + 7 E2E, CI Windows/Linux (Node 20/22).
+- 48 cek + 7 E2E, CI Windows/Linux (Node 20/24).
 
 ### Belum ada
 - MCP, plugin, hooks, subagent, auto-update.

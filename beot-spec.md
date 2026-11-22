@@ -569,7 +569,7 @@ Aturan:
 
 ## 16. Self-test
 
-`npm run selftest` menjalankan `selfcheck.js` tanpa API key dan tanpa jaringan. `npm test` menjalankan selfcheck **plus** `tests/chat-e2e.mjs`, `tests/confirm-e2e.mjs`, `tests/headless-e2e.mjs`, `tests/menu-e2e.mjs`, `tests/trust-e2e.mjs`, dan `tests/cli-e2e.mjs` (provider palsu + TUI disimulasikan lewat `tests/tui-run.cjs`). Exit code `1` bila ada yang gagal. CI (`.github/workflows/test.yml`) menjalankan `npm ci && npm test` di Ubuntu & Windows, Node 20 & 22.
+`npm run selftest` menjalankan `selfcheck.js` tanpa API key dan tanpa jaringan. `npm test` menjalankan selfcheck **plus** `tests/chat-e2e.mjs`, `tests/confirm-e2e.mjs`, `tests/headless-e2e.mjs`, `tests/menu-e2e.mjs`, `tests/trust-e2e.mjs`, dan `tests/cli-e2e.mjs` (provider palsu + TUI disimulasikan lewat `tests/tui-run.cjs`). Exit code `1` bila ada yang gagal. CI (`.github/workflows/test.yml`) menjalankan `npm ci && npm test` di Ubuntu & Windows, Node 20 & 24.
 
 Cek yang wajib lolos:
 
