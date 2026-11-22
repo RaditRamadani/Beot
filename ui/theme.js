@@ -1,4 +1,5 @@
 import { logoRows, LOGO_WIDTH, LOGO_MIN_WIDTH } from './logo.js';
+import { VERSION } from '../lib/version.js';
 
 const ESC = '\x1b[';
 export const RESET = `${ESC}0m`;
@@ -120,7 +121,7 @@ export function banner({ persona, model, file = '', width = 60 }) {
     const fit = (text) => (text.length > room ? `${text.slice(0, Math.max(1, room - 1))}…` : text);
     const gap = (text) => ' '.repeat(Math.max(2, w - leftW - text.length));
     const m = fit(meta);
-    const note = fit(file ? `berkas ${file}` : 'v0.1');
+    const note = fit(file ? `berkas ${file}` : `v${VERSION}`);
     const line1 = ` ${c.gold(rows[0])}`;
     const line2 = ` ${c.gold(rows[1])}${gap(m)}${c.dim(m)}`;
     const line3 = ` ${c.gold(rows[2])}${gap(note)}${file ? c.gold(note) : c.dim(note)}`;
@@ -133,7 +134,7 @@ export function banner({ persona, model, file = '', width = 60 }) {
     ].join('\n');
   }
   const pad = Math.max(2, w - 11 - meta.length);
-  const line1 = ` ${c.gold('◆')} ${c.bold('beot')} ${c.dim('0.1')}${' '.repeat(pad)}${c.dim(meta)}`;
+  const line1 = ` ${c.gold('◆')} ${c.bold('beot')} ${c.dim(VERSION)}${' '.repeat(pad)}${c.dim(meta)}`;
   const line2 = c.dim('═'.repeat(w));
   const hint = ` ${c.dim('ketik')} ${c.gold('/')} ${c.dim('untuk menu')}${file ? `   ${c.dim('berkas')} ${c.gold(file)}` : ''}`;
   return `${line1}\n${line2}\n${hint}`;

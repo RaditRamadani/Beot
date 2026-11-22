@@ -37,7 +37,7 @@ Ini intinya: ...
 git clone <repo-ini> beot
 cd beot
 npm install
-npm test     # opsional: 47 cek logika + 6 E2E dengan provider palsu
+npm test     # opsional: 48 cek logika + 7 E2E dengan provider palsu
 npm link     # opsional: bikin perintah `beot` bisa dipanggil dari folder mana saja
 npm start
 ```
@@ -55,6 +55,21 @@ beot -p "cari bug di src/" --output-format json
 - Keluaran teks polos: tanpa banner, tanpa ANSI.
 - `--output-format json` → `{ text, model, tokens, toolCalls: [{name, ok}], error }`.
 - Exit code: `0` sukses, `1` provider error/jawaban kosong, `2` argumen salah.
+
+## Update
+
+Beot mengecek versi baru **sekali sehari** di latar (satu `GET` ke npm registry, tanpa API key dan tanpa data pribadi). Kalau ada versi baru, splash menampilkan:
+
+```
+/update untuk memasang v0.2.0
+```
+
+Pemasangan **tidak pernah otomatis**:
+
+- `/update` → konfirmasi, lalu menjalankan `npm i -g beot@latest`; setelah selesai, tutup dan jalankan ulang `beot`.
+- Instalasi dari git (`git clone`): `/update` hanya menampilkan `git pull && npm install`.
+- Matikan cek: `/setting` → `cek update` → `Nonaktif` (atau `"update_check": false` di config).
+- Manual kapan saja: `npm i -g beot@latest`.
 
 ## Ambil API key gratis (2 menit)
 
@@ -99,6 +114,7 @@ Input tampil sebagai **blok gelap** selebar layar **tanpa bar kiri**, dengan pro
 | `/cost` | perkiraan biaya (USD) request terakhir + total sesi dari tabel harga publik |
 | `/theme [nama]` | tanpa argumen: panel **Pilih tema**; `preview` (atau `daftar`): daftar semua tema tanpa mengubah apa pun; dengan nama: langsung terapkan + contoh tampilan |
 | `/thinking` | tampilkan/sembunyikan blok `✻ berpikir · <detik>s` |
+| `/update` | cek versi terbaru lalu pasang lewat `npm i -g beot@latest` (konfirmasi dulu) |
 | `/bantu` | daftar perintah |
 | `/exit` | keluar |
 
@@ -277,7 +293,7 @@ Cara menghemat: matikan tool yang tidak dipakai (`/setting` → izin shell/web �
 - Tool loop dibatasi **16 langkah** per pesan; jika habis, muncul peringatan dan konteks tetap disimpan — ketik "lanjutkan".
 - Tool `bash` menjalankan perintah di folder kerja, **selalu lewat izin** (default `ask`), dengan daftar tolak-keras (`rm -rf /`, `format`, `shutdown`, `curl|sh`, dll). Bisa dimatikan lewat `/setting` → `izin shell` → `Matikan`.
 - Agent: `list_dir`/`read_file`/`write_file`/`edit_file` + `grep_file`/`glob_file` + `bash` (izin `y/n`, daftar tolak-keras) + `web_fetch` (URL publik saja) + `todo_write` + `export_pdf`/`export_xlsx`/`export_docx`/`export_rtf` (tulis dengan konfirmasi, hanya di folder kerja/folder izin) + `skill`; belum ada MCP.
-- Tes ada di repo: `npm test` = `selfcheck.js` (47 cek) + 6 E2E: chat+tools, konfirmasi tulis, headless `-p`, dan **semua perintah/popup menu**. Tidak butuh API key. CI menjalankan tes di Windows & Linux (Node 20/22).
+- Tes ada di repo: `npm test` = `selfcheck.js` (48 cek) + 7 E2E: chat+tools, konfirmasi tulis, headless `-p`, dan **semua perintah/popup menu**. Tidak butuh API key. CI menjalankan tes di Windows & Linux (Node 20/22).
 - Error `524`/`502`/`503` berasal dari gateway/provider, bukan dari Beot; app hanya menampilkan status + pesan ramah, bukan halaman HTML mentah. Error yang dikirim **di dalam stream** juga ditampilkan, tidak ditelan.
 - Kalau provider mengembalikan **jawaban kosong** (tanpa teks, thought, atau tool), Beot mengulang sekali lalu menampilkan `⚠ Provider tidak mengirim jawaban (kosong). Coba lagi.`
 - Picker provider hanya untuk endpoint OpenAI-compatible; layanan yang butuh OAuth atau API non-OpenAI (mis. Copilot, Anthropic native) belum didukung — pakai opsi custom kalau endpoint-nya kompatibel.

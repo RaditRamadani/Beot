@@ -23,6 +23,7 @@ import { buildCompactInput, compactedHistory } from './lib/compact.js';
 import { runShellTool } from './lib/shell.js';
 import { buildWebTool, runWebTool, isPrivateHost, isPrivateIp, resolveSafe, htmlToText } from './lib/web.js';
 import { costOf, priceFor, fmtUsd } from './lib/cost.js';
+import { compareVersion } from './lib/update.js';
 import { memoryPrompt, appendMemory, buildInitMemory } from './lib/memory.js';
 import { buildPdf, buildXlsx, buildDocx, buildRtf, runExportTool } from './lib/exporttool.js';
 import { buildDiff, buildNewFileDiff } from './lib/diff.js';
@@ -302,6 +303,15 @@ check('Logo: 3 baris rata + banner fallback', () => {
   const narrow = banner({ persona: 'build', model: 'm', width: 40 });
   assert.ok(!narrow.includes('█▀▀▄'), 'tanpa logo di terminal sempit');
   assert.equal(narrow.split('\n').length, 3, 'fallback tiga baris');
+});
+
+check('Update: bandingkan versi', () => {
+  assert.equal(compareVersion('0.1.0', '0.1.0'), 0, 'sama');
+  assert.equal(compareVersion('v0.2.0', '0.1.0'), 1, 'v prefix + lebih baru');
+  assert.equal(compareVersion('0.1.0', '0.2.0'), -1, 'lebih lama');
+  assert.equal(compareVersion('0.10.0', '0.9.9'), 1, 'numerik, bukan string');
+  assert.equal(compareVersion('1.0.0-beta', '1.0.0'), -1, 'prerelease lebih lama');
+  assert.equal(compareVersion('1.0.0', '1.0.0-beta'), 1, 'rilis lebih baru dari prerelease');
 });
 
 check('Theme: 5 bawaan + nord', () => {

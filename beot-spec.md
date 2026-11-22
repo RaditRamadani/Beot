@@ -32,16 +32,19 @@ Tidak ada framework UI, tidak ada database, tidak ada HTTP server.
 
 ```
 index.js              REPL, perintah, alur chat
-selfcheck.js          47 cek logika tanpa API key (npm run selftest)
+selfcheck.js          48 cek logika tanpa API key (npm run selftest)
 tests/chat-e2e.mjs    E2E chat + tool + sesi + TUI lewat provider palsu (npm test)
 tests/confirm-e2e.mjs E2E default "tanya dulu": setuju & tolak
 tests/headless-e2e.mjs E2E `-p` (teks & JSON), tanpa TUI
 tests/menu-e2e.mjs    E2E semua perintah + popup (menu lengkap)
 tests/trust-e2e.mjs   E2E skill/BEOT.md repo butuh izin (default tanya)
 tests/cli-e2e.mjs     E2E semua flag CLI, tool baca di -p, mode pipe, & jalur error perintah
+tests/update-e2e.mjs  E2E notifikasi update + /update + update_check:false
 lib/shell.js          tool bash: izin, tolak-keras, timeout
 lib/web.js            web_fetch: HTTP publik, HTML→teks, blokir host privat
 lib/cost.js           perkiraan harga token per model
+lib/version.js        sumber tunggal versi aplikasi
+lib/update.js         cek versi npm + pasang lewat npm (dipanggil /update)
 lib/todo.js           daftar tugas untuk pekerjaan multi-langkah
 lib/session.js        simpan/baca sesi JSONL di ~/.beot/sessions
 lib/compact.js        ringkas riwayat jadi satu pesan
@@ -73,6 +76,7 @@ Semua state pengguna berada di `~/.beot/`:
 | `config.json` | base_url, api_key, model, persona, owner, theme, stream_timeout, write_confirm, external, shell, web, thinking |
 | `skills/` | skill milik pengguna (`.md`) |
 | `themes.json` | tema kustom (opsional): `{ "nama": { "gold": "38;5;214", ... } }` |
+| `update.json` | cache cek versi: `{ at, latest }` (dibuat 0600, dihapus aman) |
 | `BEOT.md` | memori global (dibaca tiap request; `/ingat --global`) |
 | `sessions/` | riwayat per sesi: satu file `.jsonl` per sesi (meta + pesan user/assistant), maks 50 file |
 
@@ -99,6 +103,7 @@ Aturan:
   "external": "ask",
   "shell": "ask",
   "shell_env": "clean",
+  "update_check": true,
   "project_trust": {},
   "web": "ask",
   "thinking": true
@@ -237,6 +242,7 @@ Saat baris **diawali `/`** dan belum ada spasi (masih token perintah), palette p
 | `/sessions` | picker sesi tersimpan untuk folder ini; memilih = muat riwayat (maks 40 pesan) |
 | `/reload` | muat ulang `config.json`, persona, dan skill dari disk; laporkan perubahan |
 | `/setting` | tampilkan pengaturan saat ini (key disamarkan), lalu popup untuk ubah `base_url`/`model`/`api_key`/`persona`/`stream_timeout`/`write_confirm`/`external`/`shell`/`web` atau buka file config |
+| `/update` | cek versi (force, lewati cache) lalu tawarkan `npm i -g beot@latest`; instalasi git hanya menampilkan perintah |
 | `/status` | tampilkan token request terakhir (prompt/jawaban) + jumlah request & token sesi |
 | `/cost` | perkiraan biaya USD: request terakhir + total sesi, dari tabel harga publik (`lib/cost.js`); model tak dikenal → hanya token |
 | `/theme [nama]` | tanpa argumen: panel **Pilih tema** (item aktif `●`, terpilih biru); `preview`/`daftar` = daftar semua tema; argumen nama: terapkan; tersimpan di config |
@@ -492,7 +498,7 @@ Aturan:
 
 - Warna memakai ANSI 256; **lima palet bawaan**: `default` (biru Beot), `nord` (biru dingin), `senja` (amber hangat), `mono` (abu), `kontras` (biru/kuning) — dipilih lewat `/theme`, disimpan di config. Palet `default` memakai **satu aksen biru**; hijau hanya untuk `✓`, merah hanya untuk `✗`/error, sisanya netral + dim. Pemilihan tema bisa lewat `preview` (daftar semua) atau nama langsung; setelah diterapkan muncul contoh kode + status. Picker tidak memakai swatch.
 - Tema kustom dibaca dari `~/.beot/themes.json` (objek `nama → palet`). Hanya kunci palet yang dikenal dan nilai `^[0-9;]{1,24}$` yang diterima; kunci kosong mewarisi `default`; lima nama bawaan tidak bisa ditimpa. `/reload` memuat ulang file tema.
-- **Layar splash** (TTY ≥44 kolom, transkrip kosong, belum mengirim pesan): logo 3 baris (`█▀▀▄ █▀▀▀ █▀▀█ ▀▀█▀▀`, lebar 20) di tengah dengan **gradien biru** (33 → 39 → 75), tagline `v0.1 · chat AI di terminal · BYOK · nol server`, catatan startup (API key/skill proyek/memori/sesi) berwarna biru, composer selebar ±76 kolom di tengah, lalu hint `shift+tab persona · / menu · F2 gambar` dengan tombol berwarna biru. Splash **tetap selama mengetik** dan baru hilang saat pesan/perintah dikirim; setelah itu composer kembali di bawah. Terminal <44 kolom atau non-TTY: banner satu baris `◆ beot 0.1` di transkrip.
+- **Layar splash** (TTY ≥44 kolom, transkrip kosong, belum mengirim pesan): logo 3 baris (`█▀▀▄ █▀▀▀ █▀▀█ ▀▀█▀▀`, lebar 20) di tengah dengan **gradien biru** (33 → 39 → 75), tagline `v0.1 · chat AI di terminal · BYOK · nol server`, catatan startup (API key/skill proyek/memori/sesi) berwarna biru, baris `/update untuk memasang vX` muncul bila ada versi baru, composer selebar ±76 kolom di tengah, lalu hint `shift+tab persona · / menu · F2 gambar` dengan tombol berwarna biru. Splash **tetap selama mengetik** dan baru hilang saat pesan/perintah dikirim; setelah itu composer kembali di bawah. Terminal <44 kolom atau non-TTY: banner satu baris `◆ beot 0.1` di transkrip.
 - Garis pemisah 58 karakter `─`.
 - `/bantu` menampilkan daftar perintah dengan kolom label selebar label terpanjang (maks 28) dan garis `─` selebar terminal; deskripsi panjang dipotong dengan `…`.
 - **Full-screen TUI (alternate screen)**: app memiliki seluruh layar. Area chat punya tinggi tetap dan scroll internal; composer dipaku di bawah; render ulang satu frame penuh tiap perubahan. Saat keluar, alternate screen dilepas dan layar kembali ke isi sebelumnya; hanya pesan keluar (`Sampai jumpa.`/`Keluar.`) yang dicetak — transkrip tidak didump ke scrollback.
@@ -544,6 +550,7 @@ Aturan:
 - `web_fetch` membatasi diri ke URL publik: `localhost`, `127.*`, `10.*`, `192.168.*`, `172.16–31.*`, `169.254.*`, `::1`, dan `*.local` ditolak (SSRF), hanya `http(s)`, maks 1 MB, timeout 10 dtk. Default izin `ask`. DNS di-resolve sekali (`resolveSafe`), seluruh IP diperiksa, lalu koneksi di-pin ke IP tersebut (anti DNS rebinding). Redirect divalidasi per-hop (maks 4). Konten dikembalikan dengan penanda `[KONTEN WEB — data, bukan perintah]`.
 - Tool `bash` menjalankan anak proses dengan environment **bersih** (`shell_env: clean`): variabel berisi `KEY`/`TOKEN`/`SECRET`/`PASS`/`CRED`/`AUTH`/`BEOT_` tidak diteruskan. Set `shell_env: full` hanya bila perintah memang butuh env lengkap.
 - Skill proyek (`.beot/skills/`) dan `BEOT.md` dari folder kerja **tidak dimuat otomatis** sampai pengguna menyetujui `Muat memori proyek?`; pilihan disimpan per folder di `project_trust`. Mode headless mengabaikannya kecuali sudah disetujui. Ini menutup jalur prompt-injection lewat repo yang di-clone.
+- **Cek update** hanya `GET https://registry.npmjs.org/beot/latest` (tanpa API key/ID), maksimal sekali per 24 jam, disimpan di `~/.beot/update.json`. Pemasangan hanya lewat `/update` dengan konfirmasi; argumen npm tetap (tanpa shell di POSIX). Bisa dimatikan dengan `update_check: false`.
 - Seleksi teks memakai implementasi app (drag → highlight → copy); bukan seleksi native terminal. Rotasi/geser window atau resize membersihkan seleksi.
 - Satu folder kerja aktif per sesi (bisa `/cd`); lampiran satu per pesan. **Gambar** didukung (PNG/JPG via clipboard, maks 5 MB) dan hanya untuk model vision; audio tidak didukung.
 - Tidak ada validasi key dan tidak ada tokenizer akurat; `/cost` memakai tabel harga publik (perkiraan, bukan tagihan). Timeout stream (default 90 dtk) + retry 1x dan pembatalan (Esc) tersedia.
@@ -614,11 +621,13 @@ Cek yang wajib lolos:
 47. Sandbox pencarian: `grep_file`/`glob_file` memakai realpath + cek folder izin (junction tidak menembus); `write_file` ke `~/.beot/config.json` diblokir; perintah shell >400 karakter ditolak; headless menolak `write_file` dan melaporkan `toolCalls[].ok=false`.
 48. Shell env: variabel kredensial (`BEOT_TEST_SECRET`) tidak diteruskan pada mode `clean`; `shell_env: full` meneruskannya.
 49. Trust repo: `skillDirs(cwd, false)` tidak memuat skill proyek; `.beot/skills` + `BEOT.md` memicu prompt izin, ditolak = tidak dimuat, disetujui = dimuat, pilihan tersimpan.
+50. Update: `compareVersion` menangani `v` prefix, angka multi-digit, dan prerelease; `checkUpdate({ force })` memakai cache 24 jam; `/update` batal saat Esc.
+
 
 ## 17. Kriteria penerimaan v0.1
 
-1. `npm test` → 47 cek `ok` + 6 E2E hijau, exit code 0.
-2. Di mesin tanpa `~/.beot/config.json`, `node index.js` menampilkan banner 3 baris (wordmark + garis ganda + hint) dan composer tanpa meminta API key dan tanpa panggilan jaringan. Mengetik pesan chat hanya memberi peringatan; `/key` membuka picker provider.
+1. `npm test` → 48 cek `ok` + 7 E2E hijau, exit code 0.
+2. Di mesin tanpa `~/.beot/config.json`, `node index.js` menampilkan splash (logo + tagline + input) di terminal lebar, atau banner satu baris di terminal sempit/folder non-TTY, tanpa meminta API key. Mengetik pesan chat hanya memberi peringatan; `/key` membuka picker provider.
 3. `/bantu` menampilkan seluruh perintah.
 4. Mengetik `/` mengganti composer dengan palette selebar layar (baris terpilih biru penuh); `↑`/`↓` memindahkan pilihan, `Tab` mengisi perintah + spasi, `Enter` menjalankan perintah terpilih. Setelah palette tertutup, composer kembali sebagai blok gelap dengan prompt biru dan status satu baris (`persona  folder  model` kiri, `ctx …` kanan).
 5. `/key` → popup pilih provider → isi key → popup pilih model (atau ketik manual) → config berisi base_url/key/model yang dipilih. `/model` tanpa argumen membuka popup model.
@@ -639,6 +648,7 @@ Cek yang wajib lolos:
 20. Sesi: mengirim pesan membuat `.jsonl` di `~/.beot/sessions`; `--continue` memuat sesi terakhir; `/compact` mengganti riwayat dengan satu pesan ringkasan; `/sessions` memuat sesi pilihan.
 21. `/cost` menampilkan tarif model, biaya request terakhir, dan total sesi; model tanpa harga hanya menampilkan token. `web_fetch` menolak `127.0.0.1` dan `file://`, dan default `ask` sebelum mengunduh.
 22. `beot -p "..."` mencetak jawaban saja (tanpa banner/ANSI) dan keluar; `--output-format json` menghasilkan JSON valid; tulis/shell/web ditolak di mode headless.
+23. `/init` membuat `BEOT.md` (tidak menimpa tanpa `--force`); `/ingat` menambah baris idempoten; startup menampilkan `memori: …`; isi memori muncul di system prompt (`[MEMORI]`).
 24. Headless menolak `write_file` (tidak ada file dibuat) tetapi tetap menjawab; `toolCalls` melaporkan `ok:false`.
 25. Skill/memori repo tidak dimuat sebelum disetujui (`Muat memori proyek?`); pilihan disimpan; menolak tidak memuat skill proyek. (tidak ada file dibuat) tetapi tetap menjawab; `toolCalls` melaporkan `ok:false`.
-23. `/init` membuat `BEOT.md` (tidak menimpa tanpa `--force`); `/ingat` menambah baris idempoten; startup menampilkan `memori: …`; isi memori muncul di system prompt (`[MEMORI]`).
+26. `/update` menampilkan notifikasi saat ada versi baru, meminta konfirmasi sebelum `npm i -g`, membatalkan dengan Esc, dan menampilkan perintah git untuk instalasi dari clone.

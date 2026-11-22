@@ -10,7 +10,7 @@ import { buildFileTools, runFileTool, buildSearchTools } from './lib/filetools.j
 import { buildExportTools, runExportTool, EXPORT_NAMES } from './lib/exporttool.js';
 import { readDoc } from './lib/readfile.js';
 import { buildDiff, buildNewFileDiff } from './lib/diff.js';
-import { ask, log as tuiLog, append as tuiAppend, clearLog, init as tuiInit, setStatus, setSplashNote, setSplash, info as tuiInfo, shutdown, startLoading, stopLoading, beginInterrupt, endInterrupt, setTitle, bell, takeAttachment, diffBlock, markLog, rollbackLog, toolProgress, confirmInline, stripEsc, visualWidth, setFileSuggest, takeAtFiles, thoughtBlock, ledgerLine, setTodos } from './lib/tui.js';
+import { ask, log as tuiLog, append as tuiAppend, clearLog, init as tuiInit, setStatus, setSplashNote, setSplash, isSplash, info as tuiInfo, shutdown, startLoading, stopLoading, beginInterrupt, endInterrupt, setTitle, bell, takeAttachment, diffBlock, markLog, rollbackLog, toolProgress, confirmInline, stripEsc, visualWidth, setFileSuggest, takeAtFiles, thoughtBlock, ledgerLine, setTodos } from './lib/tui.js';
 import { COMMANDS } from './lib/commands.js';
 import { buildTodoTool, runTodoTool } from './lib/todo.js';
 import { initSession, appendTurn, listSessions, readSession, latestSession, pruneSessions } from './lib/session.js';
@@ -19,6 +19,8 @@ import { buildShellTool, runShellTool } from './lib/shell.js';
 import { buildWebTool, runWebTool } from './lib/web.js';
 import { costOf, priceFor, fmtUsd } from './lib/cost.js';
 import { memoryPrompt, readMemoryFiles, appendMemory, buildInitMemory, projectMemory } from './lib/memory.js';
+import { VERSION } from './lib/version.js';
+import { checkUpdate, isGitInstall, runNpmUpdate } from './lib/update.js';
 import { PROVIDERS, findProvider, fetchModels, mergeModels } from './lib/providers.js';
 import { userContent, contentChars } from './lib/attach.js';
 import { banner, c, hr, userPrompt, botPrefix, ok, warn, setTheme, themeName, themeNames, registerThemes, setPlain } from './ui/theme.js';
@@ -42,6 +44,7 @@ const state = {
   sessionFile: null,
   autoCompacted: false,
   projectTrusted: true,
+  updateLatest: null,
   silent: false,
   headless: false,
   lastTools: [],
@@ -682,6 +685,7 @@ async function handleSetting() {
       { label: 'izin path luar', desc: state.cfg.external === 'trust' ? 'sekarang: izin otomatis' : 'sekarang: tanya dulu', value: 'external' },
       { label: 'izin shell', desc: state.cfg.shell === 'allow' ? 'sekarang: jalankan otomatis' : state.cfg.shell === 'deny' ? 'sekarang: dimatikan' : 'sekarang: tanya dulu', value: 'shell' },
       { label: 'izin web', desc: state.cfg.web === 'allow' ? 'sekarang: unduh otomatis' : state.cfg.web === 'deny' ? 'sekarang: dimatikan' : 'sekarang: tanya dulu', value: 'web' },
+      { label: 'cek update', desc: state.cfg.update_check === false ? 'sekarang: nonaktif' : 'sekarang: aktif (1×/hari)', value: 'update_check' },
       { label: 'Buka file config', desc: 'edit manual di editor', value: 'file' },
     ],
   });
@@ -764,6 +768,19 @@ async function handleSetting() {
     state.cfg.web = answer;
     saveConfig(state.cfg);
     return say(ok(`Web: ${answer}`));
+  }
+
+  if (pilih === 'update_check') {
+    const answer = await ask('Cek update otomatis?', {
+      select: [
+        { label: 'Aktif', desc: 'cek versi 1×/hari (tanpa data pribadi)', value: 'yes' },
+        { label: 'Nonaktif', desc: 'hanya cek saat /update', value: 'no' },
+      ],
+    });
+    if (!answer) return;
+    state.cfg.update_check = answer === 'yes';
+    saveConfig(state.cfg);
+    return say(ok(`Cek update: ${state.cfg.update_check ? 'aktif' : 'nonaktif'}`));
   }
 
   if (pilih === 'stream_timeout') {
@@ -1247,6 +1264,32 @@ function handleIngat(arg) {
   }
 }
 
+async function handleUpdate() {
+  startLoading('Memeriksa update');
+  let u = null;
+  try { u = await checkUpdate({ force: true }); } finally { stopLoading(); }
+  if (!u) return say(warn('Tidak bisa memeriksa update. Cek jaringan lalu coba lagi.'));
+  if (!u.available) return say(ok(`Sudah versi terbaru (v${VERSION}).`));
+  if (isGitInstall()) {
+    say(`  ${c.dim('Instalasi dari git. Jalankan sendiri:')}`);
+    say(`  ${c.gold('git pull && npm install')}`);
+    return;
+  }
+  const yes = await confirmInline(`Pasang beot v${u.latest} sekarang? (npm i -g)`);
+  if (!yes) return say(c.dim('Dibatalkan.'));
+  startLoading('Memasang');
+  try {
+    await runNpmUpdate();
+    stopLoading();
+    state.updateLatest = null;
+    say(ok(`Terpasang v${u.latest}. Tutup lalu jalankan ulang \`beot\`.`));
+  } catch (err) {
+    stopLoading();
+    say(warn(`Gagal memasang: ${err.message}`));
+    say(c.dim('Coba manual: npm i -g beot@latest'));
+  }
+}
+
 async function handleSessions() {
   const rows = listSessions(state.cwd, 10);
   if (!rows.length) return say(c.dim('Belum ada sesi tersimpan untuk folder ini.'));
@@ -1342,7 +1385,7 @@ async function main() {
     return;
   }
   if (args.version) {
-    process.stdout.write('beot 0.1.0\n');
+    process.stdout.write(`beot ${VERSION}\n`);
     return;
   }
   if (args.help) {
@@ -1452,6 +1495,17 @@ async function main() {
     say('');
   }
 
+  // Cek versi di latar (hanya interaktif). Tidak memasang apa pun — itu /update.
+  if (!state.headless && process.stdin.isTTY && process.stdout.isTTY && state.cfg.update_check !== false) {
+    checkUpdate().then((u) => {
+      if (!u?.available) return;
+      state.updateLatest = u.latest;
+      const line = `/update untuk memasang v${u.latest}`;
+      if (isSplash()) setSplashNote([...notes, line].join('\n'));
+      else say(c.dim(`  ${line}`));
+    }).catch(() => {});
+  }
+
   setStatus(composerStatus);
   if (state.headless) {
     await runHeadless(args.prompt, args.format);
@@ -1494,6 +1548,7 @@ async function main() {
         case '/reload': handleReload(); break;
         case '/compact': await compactHistory(); break;
         case '/sessions': await handleSessions(); break;
+        case '/update': await handleUpdate(); break;
         case '/init': handleInit(arg); break;
         case '/ingat': handleIngat(arg); break;
         case '/setting': await handleSetting(); break;
